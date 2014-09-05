@@ -7,16 +7,17 @@ define(['util'], function(util) {
   Application.prototype = {
     init: function() {
       this.initToolbar();
+      paper.setup($('#canvas-main')[0]);
     },
 
     run: function() {
       console.log('Application::run: ' + util.hello());
+      this.draw();
     },
 
     initToolbar: function() {
       console.log('Application::initToolbar()');
       var self = this;
-      debugger;
       // relative to document
       var parentPos = $('#canvas-main').offset();
       $('#canvas-toolbar').css({top:parentPos.top, left:parentPos.left});
@@ -30,6 +31,15 @@ define(['util'], function(util) {
       $('#draw-circle').click(function() {
         self.onDrawCircle();
       });
+    },
+
+    draw: function() {
+      var path = new paper.Path();
+      path.strokeColor = 'black';
+      var startPos = new paper.Point(10, 10);
+      path.moveTo(startPos);
+      path.lineTo(startPos.add([200, 100]));
+      paper.view.draw();
     },
 
     onDrawPointer: function() {
