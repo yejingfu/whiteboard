@@ -15,7 +15,6 @@ define(['painter', 'webrtc', 'util'], function(painterlib, webrtclib, util) {
 
     run: function() {
       console.log('Application::run: ' + util.hello());
-      this.painter.draw();
     }
 
   };
