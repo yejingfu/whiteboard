@@ -13,6 +13,10 @@ The user interface is looking like below:
 
 ![ux](https://github.com/yejingfu/whiteboard/blob/master/doc/img/whiteboard_ux.png?raw=true)
 
+## Setup
+
+[Howto](https://github.com/yejingfu/whiteboard/blob/master/HOWTO.md)
+
 ## Sketch tool
 
 The `paper.js` is used as the sketching engine. See more details [here](http://www.paperjs.org).
