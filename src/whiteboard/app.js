@@ -4,6 +4,7 @@ var favicon = require('static-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var sharejs = require('share').server;
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -44,6 +45,8 @@ if (app.get('env') === 'development') {
         });
     });
 }
+
+sharejs.attach(app, {db:{type:'none'}});    // enable sharejs
 
 // production error handler
 // no stacktraces leaked to user
