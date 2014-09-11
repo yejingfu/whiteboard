@@ -1,12 +1,14 @@
-define(['painter', 'webrtc', 'util'], function(painterlib, webrtclib, util) {
+define(['document', 'painter', 'webrtc', 'util'], function(doclib, painterlib, webrtclib, util) {
 
   var Application = function() {
     this.painter = null;
     this.webrtc = null;
+    this.doc = null;
   };
 
   Application.prototype = {
     init: function() {
+      this.doc = doclib.createDocument(this);
       this.painter = painterlib.create(this);
       this.webrtc = webrtclib.create(this);
       this.painter.init($('#canvas-main')[0]);

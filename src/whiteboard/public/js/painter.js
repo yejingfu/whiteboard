@@ -12,6 +12,8 @@ var ToolEnum = {
 
 var Painter = function(app) {
   this.application = app;
+  this.doc = app.doc;
+  this.ss = this.doc.ss;
   this.canvas = null;
   this.tools = {};
   this.activeTool = ToolEnum.None;
@@ -19,10 +21,17 @@ var Painter = function(app) {
     strokeColor: '#FF0000',
     strokeWidth: 1
   };
-  this.currentPath = null;
+  this.activePath = null;
   this.startPoint = null;
   this.eatMouseUp = false;
   this.maxRoundRectRadius = 10;
+
+  this.hitOptions = {
+    segments: true,    // can select each segment within stroke/path
+    stroke: true,      // can select stroke
+    fill: true,        // can select fill
+    tolerance: 3
+  };
 };
 
 Painter.prototype = {
@@ -66,14 +75,6 @@ Painter.prototype = {
     var curTool;
     var self = this;
 
-    var hookupClickEvent = function(kind) {
-      var tool = new paper.Tool();
-      self.tools[kind] = tool;
-      tool.onMouseDown = function(e) {
-        self.onClick(kind, e);
-      };
-    };
-
     var hookupMouseEvent = function(kind) {
       var tool = new paper.Tool();
       self.tools[kind] = tool;
@@ -87,14 +88,14 @@ Painter.prototype = {
         self.drawEnd(kind, e);
       };
     };
-    hookupClickEvent(ToolEnum.Pointer);
-    hookupClickEvent(ToolEnum.Fill);
+    hookupMouseEvent(ToolEnum.Pointer);
+    hookupMouseEvent(ToolEnum.Fill);
     hookupMouseEvent(ToolEnum.Stroke);
     hookupMouseEvent(ToolEnum.Rectangle);
     hookupMouseEvent(ToolEnum.RoundRect);
     hookupMouseEvent(ToolEnum.Ellipse);
 
-    self.tools[ToolEnum.Pointer].activate();
+    this.startTool(ToolEnum.Pointer);
   },
 
   startTool: function(kind) {
@@ -108,18 +109,6 @@ Painter.prototype = {
     this.activeTool = ToolEnum.None;
   },
 
-  onClick: function(kind, e) {
-    console.log('onClick:'+kind);
-    switch (kind) {
-    case ToolEnum.Pointer:
-    break;
-    case ToolEnum.Fill:
-    break;
-    default:
-    break;
-    };
-  },
-
   addToolBarItem: function(name, cb) {
     var tbContainer = $('#canvas-toolbar');
     var html = '<div id="tb-'+name+'" class="btn"><span class=></span></div>';
@@ -129,51 +118,58 @@ Painter.prototype = {
   drawBegin: function(kind, event) {
     console.log('drawBegin:'+kind);
     var self = this;
-    if (self.currentPath) {
-      self.currentPath.selected = false;
-      self.currentPath = null;
-    }
+    self.doc.beginChange();
+
+    self.activePath = null;
     self.startPoint = event.point.clone();
+
+    if (kind === ToolEnum.Pointer) {
+      var hitResult = paper.project.hitTest(event.point, self.hitOptions);
+      if (hitResult) {
+        self.selectPath(hitResult.item);
+      } else {
+        self.deselectPath();
+      }
+    }
   },
 
   drawMove: function(kind, event) {
     console.log('drawMove:'+kind);
     var self = this;
     switch(kind) {
-    case ToolEnum.Stroke: {
-      if (!self.currentPath) {
-        self.currentPath = new paper.Path();
-        self.currentPath.add(self.startPoint);
-        self.currentPath.add(event.point);
+    case ToolEnum.Pointer: {
+      debugger;
+      for (var i in self.ss.items) {
+        var path = self.ss.items[i].path;
+        path.position = path.position.add(event.delta);
       }
-      self.currentPath.lastSegment.point = event.point;
+      break;
+    }
+    case ToolEnum.Stroke: {
+      if (!self.activePath) {
+        self.activePath = self.addPath();
+        self.activePath.add(self.startPoint);
+        self.activePath.add(event.point);
+      }
+      self.activePath.lastSegment.point = event.point;
       break;
     }
     case ToolEnum.Rectangle: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
-      self.currentPath = paper.Path.Rectangle(self.startPoint, event.point);
+      self.activePath = self.updatePath(self.activePath, paper.Path.Rectangle(self.startPoint, event.point));
       break;
     }
     case ToolEnum.RoundRect: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
       var radius = self.maxRoundRectRadius;
       var rect = new paper.Rectangle(self.startPoint, event.point);
       var minSize = rect.width > rect.height ? rect.height : rect.width;
       var radius = minSize * 0.2;
       if (radius > self.maxRoundRectRadius)
         radius = self.maxRoundRectRadius;
-      self.currentPath = paper.Path.Rectangle(rect, radius);
+      self.activePath = self.updatePath(self.activePath, paper.Path.Rectangle(rect, radius));
       break;
     }
     case ToolEnum.Ellipse: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
-      self.currentPath = paper.Path.Ellipse(new paper.Rectangle(self.startPoint, event.point));
+      self.activePath = self.updatePath(self.activePath, paper.Path.Ellipse(new paper.Rectangle(self.startPoint, event.point)));
       break;
     }
     default:
@@ -184,52 +180,85 @@ Painter.prototype = {
   drawEnd: function(kind, event) {
     console.log('drawEnd:'+kind);
     var self = this;
-    if (!self.currentPath)
+    if (!self.activePath)
       return;
     switch(kind) {
     case ToolEnum.Stroke: {
-      self.currentPath.lastSegment.remove();
-      var midPoint = self.currentPath.firstSegment.point.add(event.point);
+      self.activePath.lastSegment.remove();
+      var midPoint = self.activePath.firstSegment.point.add(event.point);
       midPoint.x /= 2;
       midPoint.y /= 2;
-      self.currentPath.add(midPoint);
-      self.currentPath.add(event.point);
-      self.currentPath.selected = true;
+      self.activePath.add(midPoint);
+      self.activePath.add(event.point);
+      //self.activePath.selected = true;
       break;
     }
     case ToolEnum.Rectangle: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
-      self.currentPath = paper.Path.Rectangle(self.startPoint, event.point);
-      self.currentPath.selected = true;
+      self.activePath = self.updatePath(self.activePath, paper.Path.Rectangle(self.startPoint, event.point));
+      //self.activePath.selected = true;
       break;
     }
     case ToolEnum.RoundRect: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
       var radius = self.maxRoundRectRadius;
       var rect = new paper.Rectangle(self.startPoint, event.point);
       var minSize = rect.width > rect.height ? rect.height : rect.width;
       var radius = minSize * 0.2;
       if (radius > self.maxRoundRectRadius)
         radius = self.maxRoundRectRadius;
-      self.currentPath = paper.Path.Rectangle(rect, radius);
-      self.currentPath.selected = true;
+      self.activePath = self.updatePath(self.activePath, paper.Path.Rectangle(rect, radius));
+      //self.activePath.selected = true;
       break;
     }
     case ToolEnum.Ellipse: {
-      if (self.currentPath) {
-        self.currentPath.remove();
-      }
-      self.currentPath = paper.Path.Ellipse(new paper.Rectangle(self.startPoint, event.point));
-      self.currentPath.selected = true;
+      self.activePath = self.updatePath(self.activePath, paper.Path.Ellipse(new paper.Rectangle(self.startPoint, event.point)));
+      //self.activePath.selected = true;
       break;
     }
     default:
     break;
     };
+    self.doc.endChange();
+  },
+
+  addPath: function(path) {
+    if (!path)
+      path = new paper.Path();
+    this.doc.shapeRoot.addPath(path);
+    return path;
+  },
+
+  deletePath: function(path) {
+    if (!path) return;
+    this.doc.shapeRoot.removePath(path);
+    path.remove();
+  },
+
+  updatePath: function(oldPath, newPath) {
+    if (oldPath)
+      this.deletePath(oldPath);
+    return this.addPath(newPath);
+  },
+
+  selectPath: function(path) {
+    if (!path) {
+      // select all
+      var self = this;
+      this.doc.shapeRoot.traverseShapes(function(shape) {
+        if (shape.path)
+          self.ss.addPath(shape.path);
+      });
+    } else {
+      this.ss.addPath(path);
+    }
+  },
+
+  deselectPath: function(path) {
+    if (!path) {
+      // deselect all
+      this.ss.removeAll();
+    } else {
+      this.ss.removePath(path);
+    }
   }
 
 };
