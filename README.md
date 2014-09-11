@@ -29,6 +29,12 @@ The `share.js` is very powerful collaborative engine. It's used here to sychroni
 
 The `WebRTC` is an open source technology used for real-time video based communiation. See more details [here](http://www.webrtc.org).
 
+More details please reference to:
+
+* [W3C draft](http://www.w3.org/TR/webrtc/)
+* [WebRTC](http://www.webrtc.org)
+* [examples in Chinese](http://blog.chinaunix.net/uid-24567872-id-3961702.html)
+
 ## Chat
 
 The application will support real-time chatting by texting and audeo.
