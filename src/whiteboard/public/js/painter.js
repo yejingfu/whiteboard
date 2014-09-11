@@ -25,6 +25,7 @@ var Painter = function(app) {
   this.startPoint = null;
   this.eatMouseUp = false;
   this.maxRoundRectRadius = 10;
+  this.fillColor = '#0a0a01';
 
   this.hitOptions = {
     segments: true,    // can select each segment within stroke/path
@@ -101,6 +102,9 @@ Painter.prototype = {
   startTool: function(kind) {
     if (this.activeTool !== ToolEnum.None)
       this.endTool();
+    if (kind == ToolEnum.Fill) {
+      this.deselectPath();
+    }
     this.tools[kind].activate();
     this.activeTool = kind;
   },
@@ -130,6 +134,13 @@ Painter.prototype = {
       } else {
         self.deselectPath();
       }
+    } else if (kind === ToolEnum.Fill) {
+      self.doc.shapeRoot.traverseShapes(true, function(shape) {
+        if (shape.path && shape.path.closed && shape.path.contains(event.point)) {
+          shape.path.fillColor = self.fillColor;
+          return true;
+        }
+      });
     }
   },
 
@@ -243,7 +254,7 @@ Painter.prototype = {
     if (!path) {
       // select all
       var self = this;
-      this.doc.shapeRoot.traverseShapes(function(shape) {
+      this.doc.shapeRoot.traverseShapes(false, function(shape) {
         if (shape.path)
           self.ss.addPath(shape.path);
       });

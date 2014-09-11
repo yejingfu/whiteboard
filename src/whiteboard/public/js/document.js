@@ -36,10 +36,16 @@ ShapeRoot.prototype = {
     return this.shapes[path.id] ? true : false;
   },
 
-  traverseShapes: function(cb) {
+  traverseShapes: function(inversed, cb) {
+    var ids = Object.keys(this.shapes);
     var id;
-    for (id in this.shapes) {
-      cb(this.shapes[id]);
+    var stop = false;
+    for (var i = 0, len = ids.length; !stop && i < len; i++) {
+      if (inversed)
+        id = ids[len - i -1];
+      else
+        id = ids[i];
+      stop = cb(this.shapes[id]);
     }
   }
 };
