@@ -18,14 +18,14 @@ var Painter = function(app) {
   this.tools = {};
   this.activeTool = ToolEnum.None;
   this.defaultStyle = {
-    strokeColor: '#FF0000',
+    strokeColor: '#000000',
     strokeWidth: 1
   };
   this.activePath = null;
   this.startPoint = null;
   this.eatMouseUp = false;
   this.maxRoundRectRadius = 10;
-  this.fillColor = '#0a0a01';
+  this.activeColor = '#000000';
 
   this.hitOptions = {
     segments: true,    // can select each segment within stroke/path
@@ -105,6 +105,23 @@ Painter.prototype = {
     hookupMouseEvent(ToolEnum.RoundRect);
     hookupMouseEvent(ToolEnum.Ellipse);
 
+    // colorpicker
+    $('#tb-color').ColorPicker({
+      color: self.activeColor,
+      onShow: function (colpkr) {
+        $(colpkr).fadeIn(500);
+        return false;
+      },
+      onHide: function (colpkr) {
+        $(colpkr).fadeOut(500);
+        return false;
+      },
+      onChange: function (hsb, hex, rgb) {
+        self.activeColor = hex;
+        paper.project.currentStyle.strokeColor = hex;
+      }
+    });
+
     this.startTool(ToolEnum.Pointer);
   },
 
@@ -146,7 +163,8 @@ Painter.prototype = {
     } else if (kind === ToolEnum.Fill) {
       self.doc.shapeRoot.traverseShapes(true, function(shape) {
         if (shape.path && shape.path.closed && shape.path.contains(event.point)) {
-          shape.path.fillColor = self.fillColor;
+          //shape.path.fillColor = self.activeColor;
+          self.doc.shapeRoot.updateShapeItem(shape, 'fillColor', self.activeColor);
           return true;
         }
       });

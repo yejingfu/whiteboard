@@ -34,7 +34,8 @@ var ShapeRoot = function(doc) {
   this.shapes = {};
 
   this.addedShapes = [];
-  this.removedShapes = []; 
+  this.removedShapes = [];
+  this.updatedShapes = [];
 };
 
 ShapeRoot.prototype = {
@@ -56,6 +57,18 @@ ShapeRoot.prototype = {
     if (item)
       this.removeShapeItem(item.key);
   },
+
+  updatePath: function(path, propName, propValue) {
+    var item;
+    this.traverseShapes(false, function(shape) {
+      if (shape.path === path) {
+        item = shape;
+        return true;
+      }
+    });
+    if (item)
+      this.updateShapeItem(item, propName, propValue);
+  },
   
   addShapeItem: function(shape) {
     var id = shape.key;
@@ -67,6 +80,16 @@ ShapeRoot.prototype = {
           this.removedShapes.splice(idx, 1);
         }
         this.addedShapes.push(shape);
+      }
+    }
+  },
+
+  updateShapeItem: function(shape, propName, propValue) {
+    var id = shape.key;
+    if (id in this.shapes) {
+      shape.path[propName] = propValue;
+      if (this.doc.isChanging) {
+          this.updatedShapes.push({'key': shape.key, 'name':propName, 'value':propValue});
       }
     }
   },
@@ -172,6 +195,7 @@ Document.prototype = {
     console.log('Document::beginChange');
     this.shapeRoot.addedShapes.length = 0;
     this.shapeRoot.removedShapes.length = 0;
+    this.shapeRoot.updatedShapes.length = 0;
     this.shapeKeys = {};
     for (k in this.shapeRoot.shapes) {
       this.shapeKeys[k] = true;
@@ -248,6 +272,14 @@ Document.prototype = {
       delta = {p:['shapes', 0], ld: shape.toJsonObject()};
       self.sharedDocument.submitOp([delta]);
     });
+    self.shapeRoot.updatedShapes.forEach(function(shape) {
+      debugger;
+      if (shape.key in self.shapeRoot.shapes) {
+        var realShape = self.shapeRoot.shapes[shape.key];
+        delta = {p:['shapes', 'update'], ld:realShape[shape.name], li:shape};
+        self.sharedDocument.submitOp([delta]);
+      }
+    });
   },
   
   pullSharedDeltaState: function(op) {
@@ -261,15 +293,19 @@ Document.prototype = {
       var addedObj = op[i].li;
       var deletedObj = op[i].ld;
       var obj;
-      if (path.length > 0 && path[0] === 'shapes') {
-        if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
-          var shapeItem = new ShapeItem();
-          shapeItem.fromJsonObject(addedObj);
-          self.shapeRoot.addShapeItem(shapeItem);
-          updated = true;
-        }
-        if (deletedObj && self.shapeRoot.existShapeItem(deletedObj.key)) {
-          self.shapeRoot.removeShapeItem(deletedObj.key);
+      if (path.length === 2) {
+         if(path[0] === 'shapes' && path[1] !== 'update') {
+          if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
+            var shapeItem = new ShapeItem();
+            shapeItem.fromJsonObject(addedObj);
+            self.shapeRoot.addShapeItem(shapeItem);
+            updated = true;
+          }
+          if (deletedObj && self.shapeRoot.existShapeItem(deletedObj.key)) {
+            self.shapeRoot.removeShapeItem(deletedObj.key);
+            updated = true;
+          }
+        } else if (path[0] === 'shapes' && path[1] === 'update') {
           updated = true;
         }
       }
