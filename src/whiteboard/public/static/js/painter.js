@@ -88,6 +88,15 @@ Painter.prototype = {
       tool.onMouseUp = function(e) {
         self.drawEnd(kind, e);
       };
+      if (kind === ToolEnum.Pointer) {
+        tool.onKeyDown = function(e) {
+          if (e.key === 'delete')
+            self.removeSelection();
+        };
+        tool.onKeyUp = function(e) {
+
+        };
+      }
     };
     hookupMouseEvent(ToolEnum.Pointer);
     hookupMouseEvent(ToolEnum.Fill);
@@ -149,7 +158,6 @@ Painter.prototype = {
     var self = this;
     switch(kind) {
     case ToolEnum.Pointer: {
-      debugger;
       for (var i in self.ss.items) {
         var path = self.ss.items[i].path;
         path.position = path.position.add(event.delta);
@@ -191,8 +199,10 @@ Painter.prototype = {
   drawEnd: function(kind, event) {
     console.log('drawEnd:'+kind);
     var self = this;
-    if (!self.activePath)
+    if (!self.activePath) {
+      self.doc.endChange();
       return;
+    }
     switch(kind) {
     case ToolEnum.Stroke: {
       self.activePath.lastSegment.remove();
@@ -216,7 +226,6 @@ Painter.prototype = {
       var radius = minSize * 0.2;
       if (radius > self.maxRoundRectRadius)
         radius = self.maxRoundRectRadius;
-      debugger;
       self.activePath = self.updatePath(self.activePath, paper.Path.Rectangle(rect, radius));
       //self.activePath.selected = true;
       break;
@@ -242,7 +251,6 @@ Painter.prototype = {
   deletePath: function(path) {
     if (!path) return;
     this.doc.shapeRoot.removePath(path);
-    path.remove();
   },
 
   updatePath: function(oldPath, newPath) {
@@ -271,6 +279,15 @@ Painter.prototype = {
     } else {
       this.ss.removePath(path);
     }
+  },
+
+  removeSelection: function() {
+    this.doc.beginChange();
+    for (k in this.ss.items) {
+      this.deletePath(this.ss.items[k].path);
+    }
+    this.deselectPath();
+    this.doc.endChange();
   }
 
 };

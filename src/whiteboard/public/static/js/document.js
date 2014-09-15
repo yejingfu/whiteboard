@@ -61,21 +61,26 @@ ShapeRoot.prototype = {
     var id = shape.key;
     if (!(id in this.shapes)) {
       this.shapes[id] = shape;
-      var idx = this.findInArray(shape, this.removedShapes);
-      if (idx >= 0) {
-        this.removedShapes.splice(idx, 1);
+      if (this.doc.isChanging) {
+        var idx = this.findInArray(shape, this.removedShapes);
+        if (idx >= 0) {
+          this.removedShapes.splice(idx, 1);
+        }
+        this.addedShapes.push(shape);
       }
-      this.addedShapes.push(shape);
     }
   },
   
   removeShapeItem: function(id) {
     if (id in this.shapes) {
-      var idx = this.findInArray(this.shapes[id], this.addedShapes);
-      if (idx >= 0) {
-        this.addedShapes.splice(idx, 1);
+      if (this.doc.isChanging) {
+        var idx = this.findInArray(this.shapes[id], this.addedShapes);
+        if (idx >= 0) {
+          this.addedShapes.splice(idx, 1);
+        }
+        this.removedShapes.push(this.shapes[id]);
       }
-      this.removedShapes.push(this.shapes[id]);
+      this.shapes[id].path.remove();
       delete this.shapes[id];
     }
   },
@@ -96,6 +101,22 @@ ShapeRoot.prototype = {
         return true;
       }
     });
+  },
+
+  existShapeItem: function(item) {
+    var key;
+    if (item instanceof ShapeItem)
+      key = item.key;
+    else 
+      key = item;
+    var exist = false;
+    this.traverseShapes(false, function(shape) {
+      if (shape.key === key) {
+        exist = true;
+        return true;
+      }
+    });
+    return exist;
   },
 
   traverseShapes: function(inversed, cb) {
@@ -139,10 +160,11 @@ var Document = function(app) {
   this.application = app;
   this.shapeRoot = new ShapeRoot(this);
   this.ss = new sslib.createSelectionSet();
+  this.isChanging = false;
   
   // sharejs stuffs
   this.sharedDocument = null;
-  this.sharedDelta = null;
+  this.shapeKeys = null;
 };
 
 Document.prototype = {
@@ -150,21 +172,35 @@ Document.prototype = {
     console.log('Document::beginChange');
     this.shapeRoot.addedShapes.length = 0;
     this.shapeRoot.removedShapes.length = 0;
+    this.shapeKeys = {};
+    for (k in this.shapeRoot.shapes) {
+      this.shapeKeys[k] = true;
+    }
+    this.isChanging = true;
   },
 
   endChange: function() {
     console.log('Document::endChange');
+    for (var len = this.shapeRoot.addedShapes.length, i = len - 1; i >= 0; i--) {
+      var k = this.shapeRoot.addedShapes[i].key;
+      if (this.shapeKeys[k])
+        this.shapeRoot.addedShapes.splice(i, 1);
+    }
+    for (var len = this.shapeRoot.removedShapes.length, i = len - 1; i >= 0; i--) {
+      var k = this.shapeRoot.removedShapes[i].key;
+      if (!this.shapeKeys[k]) {
+        this.shapeRoot.removedShapes.splice(i, 1);
+      }
+    }
     this.pushSharedDeltaState();
+    this.isChanging = false;
   },
   
   initSharedDocument: function(key) {
     var self = this;
     if (!key)
       key = SharedChannelKey;
-    debugger;
-    //sharejs.open('abc', 'text', function(err, doc) {
     sharejs.open(key, 'json', function(err, doc) {
-      debugger;
       if (err) {
         console.error('Failed to setup sharejs connection: ' + err);
         return;
@@ -186,24 +222,60 @@ Document.prototype = {
   },
   
   saveSharedDocument: function() {
+    debugger;
     var obj = this.shapeRoot.toJsonObject();
     this.sharedDocument.submitOp([{p:[], od:null, oi:obj}]);
   },
   
   loadSharedDocument: function() {
+    debugger;
+    var self = this;
     var snapshot = self.sharedDocument.snapshot;
-    this.shapeRoot.fromJsonObject(snapshot);
+    self.shapeRoot.fromJsonObject(snapshot);
+    paper.view.update();
   },
   
   pushSharedDeltaState: function() {
-    var snapshot = this.sharedDocument.snapshot;
+    var self = this;
+    var snapshot = self.sharedDocument.snapshot;
     var len = snapshot.shapes.length;
+    var delta;
+    self.shapeRoot.addedShapes.forEach(function(shape) {
+      delta = {p:['shapes', len++], li: shape.toJsonObject()};
+      self.sharedDocument.submitOp([delta]);
+    });
+    self.shapeRoot.removedShapes.forEach(function(shape) {
+      delta = {p:['shapes', 0], ld: shape.toJsonObject()};
+      self.sharedDocument.submitOp([delta]);
+    });
   },
   
   pullSharedDeltaState: function(op) {
+    debugger;
     var self = this;
     if (!op || op.length === 0)
       return;
+    var updated = false;
+    for (var i = 0, len = op.length; i < len; i++) {
+      var path = op[i].p;
+      var addedObj = op[i].li;
+      var deletedObj = op[i].ld;
+      var obj;
+      if (path.length > 0 && path[0] === 'shapes') {
+        if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
+          var shapeItem = new ShapeItem();
+          shapeItem.fromJsonObject(addedObj);
+          self.shapeRoot.addShapeItem(shapeItem);
+          updated = true;
+        }
+        if (deletedObj && self.shapeRoot.existShapeItem(deletedObj.key)) {
+          self.shapeRoot.removeShapeItem(deletedObj.key);
+          updated = true;
+        }
+      }
+    }
+    if (updated)
+      paper.view.update();
   }
 
 };
