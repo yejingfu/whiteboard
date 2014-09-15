@@ -163,7 +163,7 @@ Document.prototype = {
       key = SharedChannelKey;
     debugger;
     //sharejs.open('abc', 'text', function(err, doc) {
-    sharejs.open('abc', 'http://localhost:3000/channel', function(err, doc) {
+    sharejs.open(key, 'json', function(err, doc) {
       debugger;
       if (err) {
         console.error('Failed to setup sharejs connection: ' + err);
