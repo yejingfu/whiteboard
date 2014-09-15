@@ -1,12 +1,5 @@
 define(['selectionset', 'util'], function(sslib, util) {
 
-var ShapeItemType = {
-  Line: 'line',
-  Rectangle: 'rectangle',
-  RoundRect: 'roundrect',
-  Ellipse: 'ellipse'
-};
-
 var SharedChannelKey = "46a910fc-d481-41e1-b06c-26cb9a9e62c4";
 
 var ShapeItem = function(path, key) {
@@ -265,11 +258,11 @@ Document.prototype = {
     var len = snapshot.shapes.length;
     var delta;
     self.shapeRoot.addedShapes.forEach(function(shape) {
-      delta = {p:['shapes', len++], li: shape.toJsonObject()};
+      delta = {p:['shapes', 'add'], li: shape.toJsonObject()};
       self.sharedDocument.submitOp([delta]);
     });
     self.shapeRoot.removedShapes.forEach(function(shape) {
-      delta = {p:['shapes', 0], ld: shape.toJsonObject()};
+      delta = {p:['shapes', 'remove'], ld: shape.toJsonObject()};
       self.sharedDocument.submitOp([delta]);
     });
     self.shapeRoot.updatedShapes.forEach(function(shape) {
@@ -306,7 +299,11 @@ Document.prototype = {
             updated = true;
           }
         } else if (path[0] === 'shapes' && path[1] === 'update') {
-          updated = true;
+          var tmpShape = self.shapeRoot.shapes[addedObj.key];
+          if (tmpShape) {
+            self.shapeRoot.updateShapeItem(tmpShape, addedObj.name, addedObj.value);
+            updated = true;
+          }
         }
       }
     }
