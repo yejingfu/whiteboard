@@ -42,6 +42,7 @@ var httpHandler = function(handler) {
 };
 
 app.get('/', httpHandler(routes.index));
+app.post('/signin', httpHandler(routes.signin));
 
 
 

@@ -5,9 +5,8 @@ var WebRTC = function(app) {
 };
 
 WebRTC.prototype = {
-  init: function() {
+  init: function(channel) {
     console.log('WebRTC::init');
-    debugger;
     rtc.connect('ws://10.239.37.128:3001');
     rtc.createStream({'video':true, 'audio':true}, function(stream) {
       rtc.attachStream(stream, 'video-local');

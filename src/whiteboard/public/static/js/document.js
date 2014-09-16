@@ -273,6 +273,8 @@ Document.prototype = {
 
   pushSharedDeltaState: function() {
     var self = this;
+    if (!self.sharedDocument)
+      return;
     var snapshot = self.sharedDocument.snapshot;
     var len = snapshot.shapes.length;
     var delta;
@@ -305,7 +307,7 @@ Document.prototype = {
   
   pullSharedDeltaState: function(op) {
     var self = this;
-    if (!op || op.length === 0)
+    if (!self.sharedDocument || !op || op.length === 0)
       return;
     var updated = false;
     for (var i = 0, len = op.length; i < len; i++) {

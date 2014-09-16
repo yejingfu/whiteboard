@@ -1,20 +1,21 @@
 <% include header.ejs %>
+
 <% include welcome.ejs %>
 
 <!-- main -->
 <div class="container" role="main">
   <row>
     <div class="col-sm-8">
-      <div class="panel panel-default">
-        <div class="panel-body">
+      <div class="panel panel-default" style="margin-top:4px;">
+        <div class="panel-body" style="padding:2px;">
           <div id="canvas-container">
-            <canvas id="canvas-main" width="700" height="600" data-paper-scope="1" style="-webkit-user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0,0,0,0); background: rgb(200, 200, 200);"></canvas>
+            <canvas id="canvas-main" width="720" height="600" data-paper-scope="1" style="-webkit-user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0,0,0,0);"></canvas>
           </div>
         </div>
       </div>
     </div>
     <div class="col-sm-3 col-sm-offset-1">
-      <div class="panel panel-default">
+      <div class="panel panel-default" style="margin-top:4px;">
         <div class="panel-body">
           <div id="video-container">
             <video id="video-local" autoplay="autoplay" width="220" height="200"></video>
