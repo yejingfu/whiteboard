@@ -19,6 +19,17 @@ ShapeItem.prototype = {
     this.key = obj.key;
     this.path = new paper.Path();
     this.path.importJSON(obj.path);
+  },
+
+  serializePath: function() {
+    return this.path.exportJSON({asString: true, precision:5});
+  },
+
+  deserializePath: function(str) {
+    if (this.path)
+      this.path.remove();
+    this.path = new paper.Path();
+    this.path.importJSON(str);
   }
 };
 
@@ -81,6 +92,7 @@ ShapeRoot.prototype = {
     var id = shape.key;
     if (id in this.shapes) {
       shape.path[propName] = propValue;
+      //shape.path.fillColor = propValue;
       if (this.doc.isChanging) {
           this.updatedShapes.push({'key': shape.key, 'name':propName, 'value':propValue});
       }
@@ -252,56 +264,75 @@ Document.prototype = {
     paper.view.update();
   },
   
+  findInSnapshot: function(shape, snapshot) {
+    for (var i = 0, count = snapshot.shapes.length; i < count; i++) {
+      if (snapshot.shapes[i].key === shape.key) {
+        return i;
+      }
+    }
+    return -1;
+  },
+
   pushSharedDeltaState: function() {
     var self = this;
     var snapshot = self.sharedDocument.snapshot;
     var len = snapshot.shapes.length;
     var delta;
+    var idx;
+
     self.shapeRoot.addedShapes.forEach(function(shape) {
-      delta = {p:['shapes', 'add'], li: shape.toJsonObject()};
+      delta = {p:['shapes', len++], li: shape.toJsonObject()};
       self.sharedDocument.submitOp([delta]);
     });
     self.shapeRoot.removedShapes.forEach(function(shape) {
-      delta = {p:['shapes', 'remove'], ld: shape.toJsonObject()};
-      self.sharedDocument.submitOp([delta]);
+      idx = self.findInSnapshot(shape, snapshot);
+      if (idx >= 0) {
+        delta = {p:['shapes', idx], ld: shape.toJsonObject()};
+        //delta = {p:['shapes', shape.key], ld: shape.toJsonObject()};
+        self.sharedDocument.submitOp([delta]);
+      }
     });
     self.shapeRoot.updatedShapes.forEach(function(shape) {
-      debugger;
-      if (shape.key in self.shapeRoot.shapes) {
-        var realShape = self.shapeRoot.shapes[shape.key];
-        delta = {p:['shapes', 'update'], ld:realShape[shape.name], li:shape};
-        self.sharedDocument.submitOp([delta]);
+      idx = self.findInSnapshot(shape, snapshot);
+      if (idx >= 0) {
+        if (shape.key in self.shapeRoot.shapes) {
+          var realShape = self.shapeRoot.shapes[shape.key];
+          //delta = {p:['shapes', idx], od:realShape[shape.name], oi:shape};
+          delta = {p:['shapes', idx, 'path'], od: null, oi:realShape.serializePath()};
+          self.sharedDocument.submitOp([delta]);
+        }
       }
     });
   },
   
   pullSharedDeltaState: function(op) {
-    debugger;
     var self = this;
     if (!op || op.length === 0)
       return;
     var updated = false;
     for (var i = 0, len = op.length; i < len; i++) {
       var path = op[i].p;
-      var addedObj = op[i].li;
-      var deletedObj = op[i].ld;
       var obj;
       if (path.length === 2) {
-         if(path[0] === 'shapes' && path[1] !== 'update') {
-          if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
-            var shapeItem = new ShapeItem();
-            shapeItem.fromJsonObject(addedObj);
-            self.shapeRoot.addShapeItem(shapeItem);
-            updated = true;
-          }
-          if (deletedObj && self.shapeRoot.existShapeItem(deletedObj.key)) {
-            self.shapeRoot.removeShapeItem(deletedObj.key);
-            updated = true;
-          }
-        } else if (path[0] === 'shapes' && path[1] === 'update') {
-          var tmpShape = self.shapeRoot.shapes[addedObj.key];
-          if (tmpShape) {
-            self.shapeRoot.updateShapeItem(tmpShape, addedObj.name, addedObj.value);
+        var addedObj = op[i].li;
+        var deletedObj = op[i].ld;
+        if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
+          var shapeItem = new ShapeItem();
+          shapeItem.fromJsonObject(addedObj);
+          self.shapeRoot.addShapeItem(shapeItem);
+          updated = true;
+        }
+        if (deletedObj && self.shapeRoot.existShapeItem(deletedObj.key)) {
+          self.shapeRoot.removeShapeItem(deletedObj.key);
+          updated = true;
+        }
+      } else if (path.length === 3) {
+        var updatedObj = op[i].oi;
+        var shapeInSnapshot;
+        if (updatedObj && (shapeInSnapshot = self.sharedDocument.snapshot.shapes[path[1]])) {
+          var realShape = self.shapeRoot.shapes[shapeInSnapshot.key];
+          if (realShape) {
+            realShape.deserializePath(updatedObj);
             updated = true;
           }
         }

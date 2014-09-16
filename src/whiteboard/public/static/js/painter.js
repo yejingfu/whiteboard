@@ -117,8 +117,8 @@ Painter.prototype = {
         return false;
       },
       onChange: function (hsb, hex, rgb) {
-        self.activeColor = hex;
-        paper.project.currentStyle.strokeColor = hex;
+        self.activeColor = '#' + hex;
+        paper.project.currentStyle.strokeColor = '#'+hex;
       }
     });
 
