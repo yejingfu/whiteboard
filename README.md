@@ -17,6 +17,8 @@ The user interface is looking like below:
 
 [Howto](https://github.com/yejingfu/whiteboard/blob/master/HOWTO.md)
 
+If you fail to get source from home, please disconnec VPN!!!
+
 ## Sketch tool
 
 The `paper.js` is used as the sketching engine. See more details [here](http://www.paperjs.org).
