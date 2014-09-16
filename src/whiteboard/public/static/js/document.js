@@ -251,13 +251,11 @@ Document.prototype = {
   },
   
   saveSharedDocument: function() {
-    debugger;
     var obj = this.shapeRoot.toJsonObject();
     this.sharedDocument.submitOp([{p:[], od:null, oi:obj}]);
   },
   
   loadSharedDocument: function() {
-    debugger;
     var self = this;
     var snapshot = self.sharedDocument.snapshot;
     self.shapeRoot.fromJsonObject(snapshot);

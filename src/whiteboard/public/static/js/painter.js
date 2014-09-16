@@ -188,7 +188,14 @@ Painter.prototype = {
         self.activePath.add(self.startPoint);
         self.activePath.add(event.point);
       }
-      self.activePath.lastSegment.point = event.point;
+      if (event.event.shiftKey) {
+        // draw line
+        self.activePath.lastSegment.point = event.point;
+      } else {
+        // draw curve
+        //if (!self.activePath.lastSegment.point.equals(event.point))
+        self.activePath.add(event.point);
+      }
       break;
     }
     case ToolEnum.Rectangle: {
@@ -223,13 +230,17 @@ Painter.prototype = {
     }
     switch(kind) {
     case ToolEnum.Stroke: {
-      self.activePath.lastSegment.remove();
-      var midPoint = self.activePath.firstSegment.point.add(event.point);
-      midPoint.x /= 2;
-      midPoint.y /= 2;
-      self.activePath.add(midPoint);
-      self.activePath.add(event.point);
-      //self.activePath.selected = true;
+      if (event.event.shiftKey) {
+        self.activePath.lastSegment.remove();
+        var midPoint = self.activePath.firstSegment.point.add(event.point);
+        midPoint.x /= 2;
+        midPoint.y /= 2;
+        self.activePath.add(midPoint);
+        self.activePath.add(event.point);
+      } else {
+        self.activePath.add(event.point);
+        self.activePath.simplify(10);
+      }
       break;
     }
     case ToolEnum.Rectangle: {
