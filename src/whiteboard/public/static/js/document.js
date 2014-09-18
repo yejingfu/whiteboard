@@ -1,7 +1,5 @@
 define(['selectionset', 'util'], function(sslib, util) {
 
-var SharedChannelKey = "46a910fc-d481-41e1-b06c-26cb9a9e62c4";
-
 var ShapeItem = function(path, key) {
   this.path = path;
   this.key = key || util.uniqueID();
@@ -227,8 +225,8 @@ Document.prototype = {
   
   initSharedDocument: function(key) {
     var self = this;
-    if (!key)
-      key = SharedChannelKey;
+    if (!key || key === '')
+      key = 'unknown';
     sharejs.open(key, 'json', function(err, doc) {
       if (err) {
         console.error('Failed to setup sharejs connection: ' + err);

@@ -4,6 +4,7 @@ define(['document', 'painter', 'webrtc', 'util'], function(doclib, painterlib, w
     this.painter = null;
     this.webrtc = null;
     this.doc = null;
+    this.defaultChannelKey = "46a910fc-d481-41e1-b06c-26cb9a9e62c4";
   };
 
   Application.prototype = {
@@ -17,12 +18,15 @@ define(['document', 'painter', 'webrtc', 'util'], function(doclib, painterlib, w
           pairs[pair[0]] = pair[1];
         }
       }
+      var channel = pairs['channel'];
+      if (typeof channel === 'string')
+        this.defaultChannelKey = channel;
       this.doc = doclib.createDocument(this);
-      this.doc.initSharedDocument(pairs['channel']);
+      this.doc.initSharedDocument(this.defaultChannelKey);
       this.painter = painterlib.create(this);
       this.webrtc = webrtclib.create(this);
       this.painter.init($('#canvas-main')[0]);
-      this.webrtc.init(pairs['channel']);
+      this.webrtc.init(this.defaultChannelKey);
     },
 
     run: function() {
