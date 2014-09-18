@@ -59,3 +59,42 @@
 // module.exports = app;
 
 var webRTC = require('webrtc.io').listen(3001);
+
+webRTC.rtc.on('connect', function(rtc) {
+  console.log('webRTC server: connect');
+});
+
+webRTC.rtc.on('send answer', function(rtc) {
+  console.log('webRTC server: send answer');
+});
+
+webRTC.rtc.on('disconnect', function(rtc) {
+  console.log('webRTC server: disconnect');
+});
+
+webRTC.rtc.on('chat_msg', function(data, socket) {
+  var rooms = webRTC.rtc.rooms[data.room] || [];
+  var socketId;
+  var socketObj;
+  var msg;
+  for (var i = 0, len = rooms.length; i < len; i++) {
+    socketId = rooms[i];
+    if (socketId !== socket.id) {
+      socketObj = webRTC.rtc.getSocket(socketId);
+      if (socketObj) {
+        msg = {
+          'eventName': 'receive_chat_msg',
+          'data': {
+            'messages': data.messages,
+            'color': data.color
+          }
+        };
+        socketObj.send(JSON.stringify(msg), function(err) {
+          if (err) {
+            console.log('Failed to send message: ' + err);
+          }
+        });
+      }
+    }
+  }   // for
+});
