@@ -9,7 +9,7 @@ define(['document', 'painter', 'webrtc', 'util'], function(doclib, painterlib, w
 
   Application.prototype = {
     init: function() {
-      var query = location.search;
+      var query = window.location.search;
       var pairs = {};
       if (query[0] === '?') {
         var params = query.substring(1).split('&');

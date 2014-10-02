@@ -25,6 +25,17 @@ If the server is launched successfully, you can visit the home page at `http://l
 ## Minify
 [uglifyjs2](https://github.com/mishoo/UglifyJS2)
 
+- example:  
+
+    $uglifyjs sample.js -c -m -o sample.min.js
+
+## RequireJS optimization
+[RequireJS optimization](http://requirejs.org/docs/optimization.htm)
+
+- exmaple:
+
+   $r.js -o optimize=uglify2 baseUrl=. name=main out=main.min.js
+
 ## Bootstrap
 
 ## PaperJS
