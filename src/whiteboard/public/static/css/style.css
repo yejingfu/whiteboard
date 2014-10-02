@@ -36,3 +36,18 @@ body {
 .footer .container .text-muted {
   margin: 20px 0;
 }
+
+.toolbar .toolbaritem {
+  vertical-align: top;
+  position:relative;
+  cursor:pointer;
+}
+
+.toolbar .toolbaritem :hover {
+  background: none repeat scroll 0 0 #ddf2f9;
+}
+
+.toolbar .toolbarsep {
+  vertical-align: top;
+  position:relative;
+}

@@ -52,29 +52,32 @@ Painter.prototype = {
     var parentPos = $('#canvas-main').offset();
     $('#canvas-toolbar').css({top:parentPos.top, left:parentPos.left});
     $('#canvas-toolbar').css('visibility', 'visible');
-    $('#tb-pointer').click(function() {
-      self.startTool(ToolEnum.Pointer);
-    });
-    $('#tb-stroke').click(function() {
-      self.startTool(ToolEnum.Stroke);
-    });
-    $('#tb-rectangle').click(function() {
-      self.startTool(ToolEnum.Rectangle);
-    });
-    $('#tb-roundrect').click(function() {
-      self.startTool(ToolEnum.RoundRect);
-    });
-    $('#tb-ellipse').click(function() {
-      self.startTool(ToolEnum.Ellipse);
-    });
-    $('#tb-fill').click(function() {
-      self.startTool(ToolEnum.Fill);
-    });
   },
 
   initTools: function() {
     var curTool;
     var self = this;
+	var toolbar = $('#canvas-toolbar');
+	
+	var addToolbarItem = function(name, onclick) {
+	  var html = '<div id="tb-'+name+'" class="toolbaritem img-'+name+'-32x32-normal"></div>';
+	  toolbar.append(html);
+	  var btn = $('#tb-'+name);
+	  btn.hover(function() {
+	    self.changeToolbarItemState(name, 'hover');
+	  }, function() {
+		self.changeToolbarItemState(name, 'normal');
+	  });
+	  if (onclick !== undefined && typeof onclick === 'function') {
+	    btn.click(function() {
+	      onclick();
+	    });
+	  }
+	};
+	
+	var addToolbarSeparator = function() {
+	  toolbar.append('<div class="toolbarsep img-seperate-32x4-normal"></div>');
+	};
 
     var hookupMouseEvent = function(kind) {
       var tool = new paper.Tool();
@@ -104,7 +107,56 @@ Painter.prototype = {
     hookupMouseEvent(ToolEnum.Rectangle);
     hookupMouseEvent(ToolEnum.RoundRect);
     hookupMouseEvent(ToolEnum.Ellipse);
+	
+	addToolbarItem('new', function() {
+	  console.log('TODO: new');
+	});
+	addToolbarItem('save', function() {
+	  console.log('TODO: save');
+	});
+	addToolbarSeparator();
+	addToolbarItem('pointer', function() {
+	  self.startTool(ToolEnum.Pointer);
+	});
+	addToolbarItem('stroke', function() {
+	  self.startTool(ToolEnum.Stroke);
+	});
+	addToolbarItem('rectangle', function() {
+	  self.startTool(ToolEnum.Rectangle);
+	});
+	addToolbarItem('roundrect', function() {
+	  self.startTool(ToolEnum.RoundRect);
+	});
+	addToolbarItem('ellipse', function() {
+	  self.startTool(ToolEnum.Ellipse);
+	});
+	addToolbarItem('fill', function() {
+	  self.startTool(ToolEnum.Fill);
+	});
+	addToolbarSeparator();
+	addToolbarItem('undo', function() {
+	  console.log('TODO: undo');
+	});
+	addToolbarItem('redo', function() {
+	  console.log('TODO: redo');
+	});
+	addToolbarSeparator();
+	addToolbarItem('zoomin', function() {
+	  console.log('TODO: zoomin');
+	});
+	addToolbarItem('zoomout', function() {
+	  console.log('TODO: zoomout');
+	});
+	addToolbarSeparator();
+	addToolbarItem('grid', function() {
+	  console.log('TODO: grid');
+	});
+	addToolbarItem('ruler', function() {
+	  console.log('TODO: ruler');
+	});
+	addToolbarSeparator();
 
+	addToolbarItem('color');
     // colorpicker
     $('#tb-color').ColorPicker({
       color: self.activeColor,
@@ -124,6 +176,26 @@ Painter.prototype = {
 
     this.startTool(ToolEnum.Pointer);
   },
+  
+  changeToolbarItemState: function(name, state, force) {
+    var btn = $('#tb-'+name);
+	if (!btn)
+	  return;
+	var normalClass = 'img-'+name+'-32x32-normal';
+	var activeClass = 'img-'+name+'-32x32-active';
+	var hoverClass = 'img-'+name+'-32x32-hover';
+	var curClass = 'img-'+name+'-32x32-'+state;
+	if (!force && btn.hasClass(activeClass))
+	  return;
+	if (btn.hasClass(normalClass) && normalClass !== curClass)
+	  btn.removeClass(normalClass);
+	if (btn.hasClass(activeClass) && activeClass !== curClass)
+	  btn.removeClass(activeClass);
+	if (btn.hasClass(hoverClass) && hoverClass !== curClass)
+	  btn.removeClass(hoverClass);
+	if (!btn.hasClass(curClass))
+	  btn.addClass(curClass);
+  },
 
   startTool: function(kind) {
     if (this.activeTool !== ToolEnum.None)
@@ -133,9 +205,11 @@ Painter.prototype = {
     }
     this.tools[kind].activate();
     this.activeTool = kind;
+	this.changeToolbarItemState(kind, 'active');
   },
 
   endTool: function() {
+    this.changeToolbarItemState(this.activeTool, 'normal', true);
     this.activeTool = ToolEnum.None;
   },
 
