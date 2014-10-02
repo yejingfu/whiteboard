@@ -5,3 +5,4 @@ bin/
 # sublime project settings
 *.sublime-project
 *.sublime-workspace
+npm-debug.log

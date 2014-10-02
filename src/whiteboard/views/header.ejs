@@ -2,12 +2,22 @@
 <html>
   <head>
     <title><%= title %></title>
+<% if ('development' === env) { %>
     <link rel='stylesheet' href='/static/libs/bootstrap3.2.0/css/bootstrap.css' />
     <link ref='stylesheet' href='/static/libs/toolbar/jquery.toolbars.css' />
     <link rel='stylesheet' href='/static/css/style.css' />
     <link rel="stylesheet" href="/static/css/toolbar.css">
     <link rel="stylesheet" href="/static/libs/colorpicker/css/colorpicker.css">
     <link rel="stylesheet" href="/static/libs/colorpicker/css/layout.css">
+<% } else {%>
+    <link rel='stylesheet' href='/static/libs/bootstrap3.2.0/css/bootstrap.min.css' />
+    <link ref='stylesheet' href='/static/libs/toolbar/jquery.toolbars.min.css' />
+    <link rel='stylesheet' href='/static/css/style.css' />
+    <link rel="stylesheet" href="/static/css/toolbar.css">
+    <link rel="stylesheet" href="/static/libs/colorpicker/css/colorpicker.css">
+    <link rel="stylesheet" href="/static/libs/colorpicker/css/layout.css">
+<% } %>
+
   </head>
   <body>
     <!-- header (banner) -->

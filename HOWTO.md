@@ -12,9 +12,18 @@ To launch the server locally, call `npm start`.
 	
 	## start webrtc server
 	$cd src/rtcserver
-	$node app.js
+	$node app.js   ## or run in production env:
+	$NODE_ENV=production node app.js
 
 If the server is launched successfully, you can visit the home page at `http://localhost:3000/`.
+
+## Automation with grunt
+[Gruntjs](http://gruntjs.com/)
+[Gruntenv](https://www.npmjs.org/package/grunt-env)
+[production mode](http://www.hacksparrow.com/running-express-js-in-production-mode.html)
+
+## Minify
+[uglifyjs2](https://github.com/mishoo/UglifyJS2)
 
 ## Bootstrap
 

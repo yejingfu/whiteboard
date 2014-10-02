@@ -5,21 +5,35 @@
       </div>
     </div>
 
+<% if ('development' === env) { %>
     <script src='/static/libs/jquery-2.0.3.js'></script>
     <script src='/static/libs/bootstrap3.2.0/js/bootstrap.js'></script>
     <script src='/static/libs/toolbar/jquery.toolbar.js'></script>
     <script src='/static/libs/paperjs/paper-full.js'></script>
-    <script src="/static/libs/sharejs/bcsocket.js"></script>
-    <script src="/static/libs/sharejs/share.js"></script>
-    <script src="/static/libs/sharejs/json.js"></script>
-
+    <script src="/static/libs/sharejs/bcsocket-uncompressed.js"></script>
+    <script src="/static/libs/sharejs/share.uncompressed.js"></script>
+    <script src="/static/libs/sharejs/json.uncompressed.js"></script>
     <script type="text/javascript" src="/static/libs/colorpicker/js/colorpicker.js"></script>
     <script type="text/javascript" src="/static/libs/colorpicker/js/eye.js"></script>
     <script type="text/javascript" src="/static/libs/colorpicker/js/utils.js"></script>
     <script type="text/javascript" src="/static/libs/colorpicker/js/layout.js?ver=1.0.2"></script>
-
     <script type="text/javascript" src="/static/libs/webrtc/webrtc.io.js"></script>
-
     <script src='/static/libs/require.js' data-main='/static/js/main.js'></script>
+<% } else {%>
+    <script src='/static/libs/jquery-2.0.3.min.js'></script>
+    <script src='/static/libs/bootstrap3.2.0/js/bootstrap.min.js'></script>
+    <script src='/static/libs/toolbar/jquery.toolbar.min.js'></script>
+    <script src='/static/libs/paperjs/paper-full.min.js'></script>
+    <script src="/static/libs/sharejs/bcsocket.js"></script>
+    <script src="/static/libs/sharejs/share.js"></script>
+    <script src="/static/libs/sharejs/json.js"></script>
+    <script type="text/javascript" src="/static/libs/colorpicker/js/colorpicker.js"></script>
+    <script type="text/javascript" src="/static/libs/colorpicker/js/eye.js"></script>
+    <script type="text/javascript" src="/static/libs/colorpicker/js/utils.js"></script>
+    <script type="text/javascript" src="/static/libs/colorpicker/js/layout.js?ver=1.0.2"></script>
+    <script type="text/javascript" src="/static/libs/webrtc/webrtc.io.js"></script>
+    <script src='/static/libs/require-min.js' data-main='/static/js/main.js'></script>
+<% } %>
+
   </body>
 </html>

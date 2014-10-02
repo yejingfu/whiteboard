@@ -15,7 +15,7 @@ var app = express();
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(express.favicon(path.join(__dirname, 'public/static/res/favicon.ico')));
+app.use(express.favicon(path.join(__dirname, 'public/static/res/favicon16x16.ico')));
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.json());
@@ -32,7 +32,8 @@ if ('development' === app.get('env')) {
 }
 
 var ctx = {
-    title: 'White board'
+    title: 'Concurrent Node',
+	env: app.get('env')
 };
 
 var httpHandler = function(handler) {
