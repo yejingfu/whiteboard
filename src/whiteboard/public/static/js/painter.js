@@ -49,8 +49,14 @@ Painter.prototype = {
     var self = this;
     self.initTools();
     // relative to document
-    var parentPos = $('#canvas-main').offset();
-    $('#canvas-toolbar').css({top:parentPos.top, left:parentPos.left});
+	var onWinResize = function() {
+      var parentPos = $('#canvas-main').offset();
+      $('#canvas-toolbar').css({top:parentPos.top, left:parentPos.left});
+	};
+	$(window).resize(function() {
+	  onWinResize();
+	});
+	onWinResize();
     $('#canvas-toolbar').css('visibility', 'visible');
   },
 
