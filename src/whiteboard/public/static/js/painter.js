@@ -179,8 +179,11 @@ Painter.prototype = {
         paper.project.currentStyle.strokeColor = '#'+hex;
       }
     });
+	
+	self.enableToolbarItem('undo', false);
+	self.enableToolbarItem('redo', false);
 
-    this.startTool(ToolEnum.Pointer);
+    self.startTool(ToolEnum.Pointer);
   },
   
   changeToolbarItemState: function(name, state, force) {
@@ -201,6 +204,19 @@ Painter.prototype = {
 	  btn.removeClass(hoverClass);
 	if (!btn.hasClass(curClass))
 	  btn.addClass(curClass);
+  },
+  
+  enableToolbarItem: function(name, enable) {
+    var btn = $('#tb-'+name);
+	if (!btn)
+	  return;
+	if (enable === undefined)
+      enable = true;
+	var disableClass = 'toolbaritemdisable';
+	if (!enable && !btn.hasClass(disableClass))
+	  btn.addClass(disableClass);
+	if (enable && btn.hasClass(disableClass))
+	  btn.removeClass(disableClass);
   },
 
   startTool: function(kind) {

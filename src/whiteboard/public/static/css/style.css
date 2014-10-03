@@ -46,8 +46,13 @@ body {
 .toolbar .toolbaritem :hover {
   background: none repeat scroll 0 0 #ddf2f9;
 }
+.toolbar .toolbaritemdisable {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .toolbar .toolbarsep {
   vertical-align: top;
   position:relative;
 }
+
