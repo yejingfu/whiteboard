@@ -42,26 +42,21 @@ Painter.prototype = {
     paper.setup(this.canvas);
     this.initToolbar();
     paper.project.currentStyle = $.extend({}, this.defaultStyle);
+	
+	// show welcome
+	var text = new paper.PointText({
+		point: [150, 150],
+		content: 'Welcome!',
+		fillColor: '#eee',
+		fontFamily: 'Courier New',
+		fontWeight: 'bold',
+		fontSize: 80});
+	
+	this.startTool(ToolEnum.Pointer);
   },
 
   initToolbar: function() {
     console.log('Application::initToolbar()');
-    var self = this;
-    self.initTools();
-    // relative to document
-	var onWinResize = function() {
-      var parentPos = $('#canvas-main').offset();
-      $('#canvas-toolbar').css({top:parentPos.top, left:parentPos.left});
-	};
-	$(window).resize(function() {
-	  onWinResize();
-	});
-	onWinResize();
-    $('#canvas-toolbar').css('visibility', 'visible');
-  },
-
-  initTools: function() {
-    var curTool;
     var self = this;
 	var toolbar = $('#canvas-toolbar');
 	
@@ -182,8 +177,17 @@ Painter.prototype = {
 	
 	self.enableToolbarItem('undo', false);
 	self.enableToolbarItem('redo', false);
-
-    self.startTool(ToolEnum.Pointer);
+	
+    // relative to document
+	var onWinResize = function() {
+      var parentPos = $('#canvas-main').offset();
+      toolbar.css({top:parentPos.top, left:parentPos.left});
+	};
+	$(window).resize(function() {
+	  onWinResize();
+	});
+	onWinResize();
+	toolbar.css('visibility', 'visible');
   },
   
   changeToolbarItemState: function(name, state, force) {
