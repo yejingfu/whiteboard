@@ -26,6 +26,7 @@ var Painter = function(app) {
   this.eatMouseUp = false;
   this.maxRoundRectRadius = 10;
   this.activeColor = '#000000';
+  this.welcome = false;
 
   this.hitOptions = {
     segments: true,    // can select each segment within stroke/path
@@ -44,10 +45,11 @@ Painter.prototype = {
     paper.project.currentStyle = $.extend({}, this.defaultStyle);
 	
 	// show welcome
-	var text = new paper.PointText({
+	this.welcome = new paper.PointText({
 		point: [150, 150],
 		content: 'Welcome!',
-		fillColor: '#eee',
+		fillColor: 'rgba(200, 200, 200, 0.4)',
+		strokeColor: 'rgba(255, 200, 200, 0.6)',
 		fontFamily: 'Courier New',
 		fontWeight: 'bold',
 		fontSize: 80});
@@ -264,7 +266,9 @@ Painter.prototype = {
       self.doc.shapeRoot.traverseShapes(true, function(shape) {
         if (shape.path && shape.path.closed && shape.path.contains(event.point)) {
           //shape.path.fillColor = self.activeColor;
-          self.doc.shapeRoot.updateShapeItem(shape, 'fillColor', self.activeColor);
+          self.doc.shapeRoot.updateShapeItemProp(shape, 'fillColor', self.activeColor);
+		  self.doc.endChange();
+		  self.doc.beginChange();
           return true;
         }
       });
@@ -324,6 +328,17 @@ Painter.prototype = {
   drawEnd: function(kind, event) {
     console.log('drawEnd:'+kind);
     var self = this;
+	if (kind === ToolEnum.Pointer) {
+	  if (!event.point.equals(self.startPoint)) {
+		for (var i in self.ss.items) {
+			var path = self.ss.items[i].path;
+			//path.position = path.position.add(event.delta);
+			self.doc.shapeRoot.updatePathProp(path, 'position', path.position);
+		}
+	  }
+	  self.doc.endChange();
+	  return;
+	}
     if (!self.activePath) {
       self.doc.endChange();
       return;
@@ -379,7 +394,12 @@ Painter.prototype = {
 
   deletePath: function(path) {
     if (!path) return;
-    this.doc.shapeRoot.removePath(path);
+	if (path === this.welcome) {
+	  this.welcome.remove();
+	  this.welcome = null;
+	} else {
+      this.doc.shapeRoot.removePath(path);
+	}
   },
 
   updatePath: function(oldPath, newPath) {
@@ -405,6 +425,11 @@ Painter.prototype = {
     if (!path) {
       // deselect all
       this.ss.removeAll();
+	  // workaround
+	  this.doc.shapeRoot.traverseShapes(false, function(shape) {
+	    if (shape.path && shape.path.selected)
+		  shape.path.selected = false;
+	  });
     } else {
       this.ss.removePath(path);
     }

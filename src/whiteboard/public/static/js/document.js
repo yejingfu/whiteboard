@@ -59,18 +59,6 @@ ShapeRoot.prototype = {
     if (item)
       this.removeShapeItem(item.key);
   },
-
-  updatePath: function(path, propName, propValue) {
-    var item;
-    this.traverseShapes(false, function(shape) {
-      if (shape.path === path) {
-        item = shape;
-        return true;
-      }
-    });
-    if (item)
-      this.updateShapeItem(item, propName, propValue);
-  },
   
   addShapeItem: function(shape) {
     var id = shape.key;
@@ -85,14 +73,52 @@ ShapeRoot.prototype = {
       }
     }
   },
+  
+  updatePathProp: function(path, propName, propValue, isPulling) {
+    var item;
+    this.traverseShapes(false, function(shape) {
+      if (shape.path === path) {
+        item = shape;
+        return true;
+      }
+    });
+    if (item)
+      this.updateShapeItemProp(item, propName, propValue, isPulling);
+  },
+  
+  updatePropByShapeId: function(shapeId, propName, propValue, isPulling) {
+    var item;
+    this.traverseShapes(false, function(shape) {
+      if (shape.key === shapeId) {
+        item = shape;
+        return true;
+      }
+    });
+    if (item)
+      this.updateShapeItemProp(item, propName, propValue, isPulling);
+  },
 
-  updateShapeItem: function(shape, propName, propValue) {
+  updateShapeItemProp: function(shape, propName, propValue, isPulling) {
     var id = shape.key;
+	var propValueStr;
+	if (typeof propValue === 'string')
+	  propValueStr = propValue;
+	else
+	  propValueStr = JSON.stringify(propValue);
     if (id in this.shapes) {
-      shape.path[propName] = propValue;
-      //shape.path.fillColor = propValue;
-      if (this.doc.isChanging) {
-          this.updatedShapes.push({'key': shape.key, 'name':propName, 'value':propValue});
+	  if (propName === 'position') {
+	    if (propValue instanceof paper.Point) {
+		  shape.path[propName] = propValue;
+		} else {
+		  var obj = JSON.parse(propValue);
+		  var pt = new paper.Point(obj[1], obj[2]);
+		  shape.path[propName] = pt;
+		}
+	  } else {
+	    shape.path[propName] = propValue;
+	  }
+      if (this.doc.isChanging && !isPulling) {
+          this.updatedShapes.push({'key': shape.key, 'name':propName, 'value':propValueStr});
       }
     }
   },
@@ -159,21 +185,16 @@ ShapeRoot.prototype = {
   },
   
   toJsonObject: function() {
-    var obj = {};
-    obj.shapes = [];
+    var shapes = [];
     this.traverseShapes(false, function(shape) {
       if (shape instanceof ShapeItem) {
-        obj.shapes.push(shape.toJsonObject());
+        shapes.push(shape.toJsonObject());
       }
     })
-    return obj;
+    return shapes;
   },
   
-  fromJsonObject: function(obj) {
-    if (!obj || !obj.shapes) {
-      return;
-    }
-    var shapes = obj.shapes;
+  fromJsonObject: function(shapes) {
     for (var i = 0, len = shapes.length; i < len; i++) {
       var shape = new ShapeItem();
       shape.fromJsonObject(shapes[i]);
@@ -249,24 +270,21 @@ Document.prototype = {
   },
   
   saveSharedDocument: function() {
-    var obj = this.shapeRoot.toJsonObject();
-    this.sharedDocument.submitOp([{p:[], od:null, oi:obj}]);
+    //var obj = this.shapeRoot.toJsonObject();
+    //this.sharedDocument.submitOp([{p:[], od:null, oi:obj}]);
+	var obj = {'shapes': this.shapeRoot.toJsonObject(), 'updates': []};
+	this.sharedDocument.submitOp([{p:[], od:null, oi:obj}]);
   },
   
   loadSharedDocument: function() {
     var self = this;
     var snapshot = self.sharedDocument.snapshot;
-    self.shapeRoot.fromJsonObject(snapshot);
+    self.shapeRoot.fromJsonObject(snapshot.shapes);
+	// updating...
+	for (var i = 0, len = snapshot.updates.length; i < len; i++) {
+	  self.updateShapeProperty(snapshot.updates[len - i - 1]);
+	}
     paper.view.update();
-  },
-  
-  findInSnapshot: function(shape, snapshot) {
-    for (var i = 0, count = snapshot.shapes.length; i < count; i++) {
-      if (snapshot.shapes[i].key === shape.key) {
-        return i;
-      }
-    }
-    return -1;
   },
 
   pushSharedDeltaState: function() {
@@ -294,9 +312,9 @@ Document.prototype = {
       idx = self.findInSnapshot(shape, snapshot);
       if (idx >= 0) {
         if (shape.key in self.shapeRoot.shapes) {
-          var realShape = self.shapeRoot.shapes[shape.key];
-          //delta = {p:['shapes', idx], od:realShape[shape.name], oi:shape};
-          delta = {p:['shapes', idx, 'path'], od: null, oi:realShape.serializePath()};
+          //var realShape = self.shapeRoot.shapes[shape.key];
+		  //var jsonVal = JSON.stringify(shape);
+		  delta = {p:['updates', 0], li:shape};
           self.sharedDocument.submitOp([delta]);
         }
       }
@@ -311,7 +329,7 @@ Document.prototype = {
     for (var i = 0, len = op.length; i < len; i++) {
       var path = op[i].p;
       var obj;
-      if (path.length === 2) {
+      if (path.length === 2 && path[0] === 'shapes') {
         var addedObj = op[i].li;
         var deletedObj = op[i].ld;
         if (addedObj && !self.shapeRoot.existShapeItem(addedObj.key)) {
@@ -324,20 +342,40 @@ Document.prototype = {
           self.shapeRoot.removeShapeItem(deletedObj.key);
           updated = true;
         }
-      } else if (path.length === 3) {
-        var updatedObj = op[i].oi;
+      } else if (path.length === 2 && path[0] === 'updates') { //else if (path.length === 3) {
+        //var updatedObj = JSON.parse(op[i].oi);
+		var updatedObj = op[i].li;//JSON.parse(op[i].li);
         var shapeInSnapshot;
-        if (updatedObj && (shapeInSnapshot = self.sharedDocument.snapshot.shapes[path[1]])) {
-          var realShape = self.shapeRoot.shapes[shapeInSnapshot.key];
-          if (realShape) {
-            realShape.deserializePath(updatedObj);
-            updated = true;
-          }
+		var realShape;
+        //if (updatedObj && (shapeInSnapshot = self.sharedDocument.snapshot.shapes[path[1]])) {
+		if (updatedObj && (null !== self.shapeRoot.shapes[updatedObj.key])) {
+          //var realShape = self.shapeRoot.shapes[shapeInSnapshot.key];
+          //realShape.deserializePath(updatedObj);
+		  //realShape.updateProperty(updatedObj);
+		  //self.shapeRoot.updatePropByShapeId(updatedObj.key, updatedObj.name, updatedObj.value, true);
+		  self.updateShapeProperty(updatedObj);
+          updated = true;
         }
       }
     }
     if (updated)
       paper.view.update();
+  },
+  
+  findInSnapshot: function(shape, snapshot) {
+    for (var i = 0, count = snapshot.shapes.length; i < count; i++) {
+      if (snapshot.shapes[i].key === shape.key) {
+        return i;
+      }
+    }
+    return -1;
+  },
+  
+  updateShapeProperty: function(updateData) {
+    var self = this;
+	if (updateData && (null !== self.shapeRoot.shapes[updateData.key])) {
+	  self.shapeRoot.updatePropByShapeId(updateData.key, updateData.name, updateData.value, true);
+	}
   }
 
 };
