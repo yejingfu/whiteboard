@@ -1,4 +1,4 @@
-define(function() {
+define(['gear'], function(gearLib) {
 
 var ToolEnum = {
   Pointer: 'pointer',
@@ -34,6 +34,9 @@ var Painter = function(app) {
     fill: true,        // can select fill
     tolerance: 3
   };
+
+  this.gears = [];
+  this.animation = false;
 };
 
 Painter.prototype = {
@@ -60,27 +63,27 @@ Painter.prototype = {
   initToolbar: function() {
     console.log('Application::initToolbar()');
     var self = this;
-	var toolbar = $('#canvas-toolbar');
-	
-	var addToolbarItem = function(name, onclick) {
-	  var html = '<div id="tb-'+name+'" class="toolbaritem img-'+name+'-32x32-normal"></div>';
-	  toolbar.append(html);
-	  var btn = $('#tb-'+name);
-	  btn.hover(function() {
-	    self.changeToolbarItemState(name, 'hover');
-	  }, function() {
-		self.changeToolbarItemState(name, 'normal');
-	  });
-	  if (onclick !== undefined && typeof onclick === 'function') {
-	    btn.click(function() {
-	      onclick();
-	    });
-	  }
-	};
-	
-	var addToolbarSeparator = function() {
-	  toolbar.append('<div class="toolbarsep img-seperate-32x4-normal"></div>');
-	};
+    var toolbar = $('#canvas-toolbar');
+
+    var addToolbarItem = function(name, onclick) {
+      var html = '<div id="tb-'+name+'" class="toolbaritem img-'+name+'-32x32-normal"></div>';
+      toolbar.append(html);
+      var btn = $('#tb-'+name);
+      btn.hover(function() {
+        self.changeToolbarItemState(name, 'hover');
+      }, function() {
+        self.changeToolbarItemState(name, 'normal');
+      });
+      if (onclick !== undefined && typeof onclick === 'function') {
+        btn.click(function() {
+          onclick();
+        });
+      }
+    };
+
+    var addToolbarSeparator = function() {
+      toolbar.append('<div class="toolbarsep img-seperate-32x4-normal"></div>');
+    };
 
     var hookupMouseEvent = function(kind) {
       var tool = new paper.Tool();
@@ -110,56 +113,58 @@ Painter.prototype = {
     hookupMouseEvent(ToolEnum.Rectangle);
     hookupMouseEvent(ToolEnum.RoundRect);
     hookupMouseEvent(ToolEnum.Ellipse);
-	
-	addToolbarItem('new', function() {
-	  console.log('TODO: new');
-	});
-	addToolbarItem('save', function() {
-	  console.log('TODO: save');
-	});
-	addToolbarSeparator();
-	addToolbarItem('pointer', function() {
-	  self.startTool(ToolEnum.Pointer);
-	});
-	addToolbarItem('stroke', function() {
-	  self.startTool(ToolEnum.Stroke);
-	});
-	addToolbarItem('rectangle', function() {
-	  self.startTool(ToolEnum.Rectangle);
-	});
-	addToolbarItem('roundrect', function() {
-	  self.startTool(ToolEnum.RoundRect);
-	});
-	addToolbarItem('ellipse', function() {
-	  self.startTool(ToolEnum.Ellipse);
-	});
-	addToolbarItem('fill', function() {
-	  self.startTool(ToolEnum.Fill);
-	});
-	addToolbarSeparator();
-	addToolbarItem('undo', function() {
-	  console.log('TODO: undo');
-	});
-	addToolbarItem('redo', function() {
-	  console.log('TODO: redo');
-	});
-	addToolbarSeparator();
-	addToolbarItem('zoomin', function() {
-	  console.log('TODO: zoomin');
-	});
-	addToolbarItem('zoomout', function() {
-	  console.log('TODO: zoomout');
-	});
-	addToolbarSeparator();
-	addToolbarItem('grid', function() {
-	  console.log('TODO: grid');
-	});
-	addToolbarItem('ruler', function() {
-	  console.log('TODO: ruler');
-	});
-	addToolbarSeparator();
 
-	addToolbarItem('color');
+    addToolbarItem('new', function() {
+      console.log('TODO: new');
+    });
+    addToolbarItem('save', function() {
+      console.log('TODO: save');
+    });
+    addToolbarSeparator();
+    addToolbarItem('pointer', function() {
+      self.startTool(ToolEnum.Pointer);
+    });
+    addToolbarItem('stroke', function() {
+      self.startTool(ToolEnum.Stroke);
+    });
+    addToolbarItem('rectangle', function() {
+      self.startTool(ToolEnum.Rectangle);
+    });
+    addToolbarItem('roundrect', function() {
+      self.startTool(ToolEnum.RoundRect);
+    });
+    addToolbarItem('ellipse', function() {
+      self.startTool(ToolEnum.Ellipse);
+    });
+    addToolbarItem('fill', function() {
+      self.startTool(ToolEnum.Fill);
+    });
+    addToolbarSeparator();
+    addToolbarItem('undo', function() {
+      console.log('TODO: undo');
+    });
+    addToolbarItem('redo', function() {
+      console.log('TODO: redo');
+    });
+    addToolbarSeparator();
+    addToolbarItem('zoomin', function() {
+      console.log('TODO: zoomin');
+    });
+    addToolbarItem('zoomout', function() {
+      console.log('TODO: zoomout');
+    });
+    addToolbarSeparator();
+    addToolbarItem('grid', function() {
+      console.log('TODO: grid');
+      self.drawGearSample();
+    });
+    addToolbarItem('ruler', function() {
+      console.log('TODO: ruler');
+      this.animation = !this.animation;
+    });
+    addToolbarSeparator();
+
+    addToolbarItem('color');
     // colorpicker
     $('#tb-color').ColorPicker({
       color: self.activeColor,
@@ -176,53 +181,53 @@ Painter.prototype = {
         paper.project.currentStyle.strokeColor = '#'+hex;
       }
     });
-	
-	self.enableToolbarItem('undo', false);
-	self.enableToolbarItem('redo', false);
-	
-    // relative to document
-	var onWinResize = function() {
-      var parentPos = $('#canvas-main').offset();
-      toolbar.css({top:parentPos.top, left:parentPos.left});
-	};
-	$(window).resize(function() {
-	  onWinResize();
-	});
-	onWinResize();
-	toolbar.css('visibility', 'visible');
+
+    self.enableToolbarItem('undo', false);
+    self.enableToolbarItem('redo', false);
+
+      // relative to document
+    var onWinResize = function() {
+        var parentPos = $('#canvas-main').offset();
+        toolbar.css({top:parentPos.top, left:parentPos.left});
+    };
+    $(window).resize(function() {
+      onWinResize();
+    });
+    onWinResize();
+    toolbar.css('visibility', 'visible');
   },
   
   changeToolbarItemState: function(name, state, force) {
     var btn = $('#tb-'+name);
-	if (!btn)
-	  return;
-	var normalClass = 'img-'+name+'-32x32-normal';
-	var activeClass = 'img-'+name+'-32x32-active';
-	var hoverClass = 'img-'+name+'-32x32-hover';
-	var curClass = 'img-'+name+'-32x32-'+state;
-	if (!force && btn.hasClass(activeClass))
-	  return;
-	if (btn.hasClass(normalClass) && normalClass !== curClass)
-	  btn.removeClass(normalClass);
-	if (btn.hasClass(activeClass) && activeClass !== curClass)
-	  btn.removeClass(activeClass);
-	if (btn.hasClass(hoverClass) && hoverClass !== curClass)
-	  btn.removeClass(hoverClass);
-	if (!btn.hasClass(curClass))
-	  btn.addClass(curClass);
+    if (!btn)
+      return;
+    var normalClass = 'img-'+name+'-32x32-normal';
+    var activeClass = 'img-'+name+'-32x32-active';
+    var hoverClass = 'img-'+name+'-32x32-hover';
+    var curClass = 'img-'+name+'-32x32-'+state;
+    if (!force && btn.hasClass(activeClass))
+      return;
+    if (btn.hasClass(normalClass) && normalClass !== curClass)
+      btn.removeClass(normalClass);
+    if (btn.hasClass(activeClass) && activeClass !== curClass)
+      btn.removeClass(activeClass);
+    if (btn.hasClass(hoverClass) && hoverClass !== curClass)
+      btn.removeClass(hoverClass);
+    if (!btn.hasClass(curClass))
+      btn.addClass(curClass);
   },
   
   enableToolbarItem: function(name, enable) {
     var btn = $('#tb-'+name);
-	if (!btn)
-	  return;
-	if (enable === undefined)
-      enable = true;
-	var disableClass = 'toolbaritemdisable';
-	if (!enable && !btn.hasClass(disableClass))
-	  btn.addClass(disableClass);
-	if (enable && btn.hasClass(disableClass))
-	  btn.removeClass(disableClass);
+    if (!btn)
+      return;
+    if (enable === undefined)
+        enable = true;
+    var disableClass = 'toolbaritemdisable';
+    if (!enable && !btn.hasClass(disableClass))
+      btn.addClass(disableClass);
+    if (enable && btn.hasClass(disableClass))
+      btn.removeClass(disableClass);
   },
 
   startTool: function(kind) {
@@ -233,7 +238,7 @@ Painter.prototype = {
     }
     this.tools[kind].activate();
     this.activeTool = kind;
-	this.changeToolbarItemState(kind, 'active');
+    this.changeToolbarItemState(kind, 'active');
   },
 
   endTool: function() {
@@ -267,8 +272,8 @@ Painter.prototype = {
         if (shape.path && shape.path.closed && shape.path.contains(event.point)) {
           //shape.path.fillColor = self.activeColor;
           self.doc.shapeRoot.updateShapeItemProp(shape, 'fillColor', self.activeColor);
-		  self.doc.endChange();
-		  self.doc.beginChange();
+          self.doc.endChange();
+          self.doc.beginChange();
           return true;
         }
       });
@@ -328,17 +333,17 @@ Painter.prototype = {
   drawEnd: function(kind, event) {
     console.log('drawEnd:'+kind);
     var self = this;
-	if (kind === ToolEnum.Pointer) {
-	  if (!event.point.equals(self.startPoint)) {
-		for (var i in self.ss.items) {
-			var path = self.ss.items[i].path;
-			//path.position = path.position.add(event.delta);
-			self.doc.shapeRoot.updatePathProp(path, 'position', path.position);
-		}
-	  }
-	  self.doc.endChange();
-	  return;
-	}
+    if (kind === ToolEnum.Pointer) {
+      if (!event.point.equals(self.startPoint)) {
+        for (var i in self.ss.items) {
+          var path = self.ss.items[i].path;
+          //path.position = path.position.add(event.delta);
+          self.doc.shapeRoot.updatePathProp(path, 'position', path.position);
+        }
+      }
+      self.doc.endChange();
+      return;
+    }
     if (!self.activePath) {
       self.doc.endChange();
       return;
@@ -394,12 +399,12 @@ Painter.prototype = {
 
   deletePath: function(path) {
     if (!path) return;
-	if (path === this.welcome) {
-	  this.welcome.remove();
-	  this.welcome = null;
-	} else {
-      this.doc.shapeRoot.removePath(path);
-	}
+    if (path === this.welcome) {
+      this.welcome.remove();
+      this.welcome = null;
+    } else {
+        this.doc.shapeRoot.removePath(path);
+    }
   },
 
   updatePath: function(oldPath, newPath) {
@@ -425,11 +430,11 @@ Painter.prototype = {
     if (!path) {
       // deselect all
       this.ss.removeAll();
-	  // workaround
-	  this.doc.shapeRoot.traverseShapes(false, function(shape) {
-	    if (shape.path && shape.path.selected)
-		  shape.path.selected = false;
-	  });
+      // workaround
+      this.doc.shapeRoot.traverseShapes(false, function(shape) {
+        if (shape.path && shape.path.selected)
+        shape.path.selected = false;
+      });
     } else {
       this.ss.removePath(path);
     }
@@ -442,6 +447,80 @@ Painter.prototype = {
     }
     this.deselectPath();
     this.doc.endChange();
+  },
+
+  drawGearSample: function() {
+    if (this.gears.length > 0)
+      return;
+    var width = this.canvas.width;
+    var height = this.canvas.height;
+    var config = [{'numTeeth': 15, 'color': '#ee2a33', 'angle':0},   // red
+        {'numTeeth': 4, 'color': '#00aeef', 'angle': 102},       // blue  (100)
+        {'numTeeth': 41, 'color': '#52b755', 'angle': 52},     //green
+        {'numTeeth': 6, 'color': '#d03c3a', 'angle': 338},      // dark red (324)
+        {'numTeeth': 9, 'color': '#f00ff0', 'angle': 30},       // light purple
+        {'numTeeth': 4, 'color': '#fec01e', 'angle': 298},      // yellow
+        {'numTeeth': 21, 'color': '#e0cb61', 'angle': 248},     // beige
+        {'numTeeth': 11, 'color': '#f69c9f', 'angle': 210},     // pink
+        {'numTeeth': 8, 'color': '#157d6b', 'angle': 124}/*,   //dark green
+        {'numTeeth': 11, 'color': '#52b755', 'angle':0}*/   // orange
+    ];
+
+    var p = new paper.Point(width / 7, height / 3 + 30);
+    var clockwise = true;
+    var speed = 0.75;
+    var gear = gearLib.createGear(p, config[0].numTeeth, config[0].color, speed, clockwise);   // red
+    this.gears.push(gear);
+    clockwise = !clockwise;
+    var ret = {'point': p, 'gear': gear, 'speed': speed};
+    for (var i = 1, len = config.length; i < len; i++) {
+      ret = this.addGear(ret.point, ret.gear, config[i].numTeeth, config[i].color, ret.speed, config[i].angle, clockwise);
+      clockwise = !clockwise;
+    }
+  },
+
+  addGear: function(pt, gear, g2, color, speed, angle, clockwise) {
+    var scale = gearLib.defaultScale;
+    var size = gearLib.defaultToothSize;
+    var r1 = gear.teethCount * scale / 2;
+    var r2 = g2 * scale / 2;
+    var p2 = new paper.Point(pt.x + ((r1 + r2 + size - 2) * Math.cos((angle / 180)*Math.PI)),
+        pt.y + ((r1 + r2 + size - 2) * Math.sin(angle/180 * Math.PI)));
+    var dupGear = gearLib.createGear(p2, g2, color, speed * gear.teethCount / g2);
+    this.gears.push(dupGear);
+    // rotate
+    var wedge = 360 / gear.teethCount;
+    var tooth = Math.floor((angle - gear.rotation) / wedge);
+    var t = 2 * Math.PI * tooth / gear.teethCount;
+    var x = Math.round((r1 + size / 1.85) * Math.cos(t));
+    var y = Math.round((r1 + size / 1.85) * Math.sin(t));
+    var rad = gear.rotation * Math.PI / 180;
+    var x1 = (Math.cos(rad) * x) - (Math.sin(rad) * y);
+    var y1 = (Math.cos(rad) * y) - (Math.sin(rad) * x);
+    x = x1;
+    y = y1;
+    var pa1 = new paper.Point(gear.pos.x + x, gear.pos.y + y);
+    t = 2 * Math.PI * 0.5 / dupGear.teethCount;
+    x = Math.round(r2 * Math.cos(t));
+    y = Math.round(r2 * Math.sin(t));
+    var pad = new paper.Point(dupGear.pos.x + x, dupGear.pos.y + y);
+    var pa2 = dupGear.pos;
+    var v = pa1.subtract(pa2);
+    var v2 = pad.subtract(pa2);
+    dupGear.rotate(v.angle - v2.angle);
+    return {
+      'point': p2,
+      'speed': speed * gear.teethCount / g2,
+      'gear': dupGear
+    }
+  },
+
+  gearAnimation: function() {
+    if (!this.animation)
+      return;
+    for (var i = 0, len = this.gears.length; i < len; i++) {
+      this.gears[i].spin();
+    }
   }
 
 };

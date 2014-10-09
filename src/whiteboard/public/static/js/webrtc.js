@@ -15,6 +15,8 @@ WebRTC.prototype = {
   init: function(channel) {
     console.log('WebRTC::init');
     var self = this;
+    if (!rtc.dataChannelSupport)
+      return false;
     self.PeerConnection = window.PeerConnection || window.webkitPeerConnection00 || window.webkitRTCPeerConnection;
     if (!self.PeerConnection) {
       console.error('The browser does not support WebRTC, please enable it by going to chrome://flags');
