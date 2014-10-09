@@ -46,18 +46,18 @@ Painter.prototype = {
     paper.setup(this.canvas);
     this.initToolbar();
     paper.project.currentStyle = $.extend({}, this.defaultStyle);
-	
-	// show welcome
-	this.welcome = new paper.PointText({
-		point: [150, 150],
-		content: 'Welcome!',
-		fillColor: 'rgba(200, 200, 200, 0.4)',
-		strokeColor: 'rgba(255, 200, 200, 0.6)',
-		fontFamily: 'Courier New',
-		fontWeight: 'bold',
-		fontSize: 80});
-	
-	this.startTool(ToolEnum.Pointer);
+
+  // show welcome
+  this.welcome = new paper.PointText({
+    point: [150, 150],
+    content: 'Welcome!',
+    fillColor: 'rgba(200, 200, 200, 0.4)',
+    strokeColor: 'rgba(255, 200, 200, 0.6)',
+    fontFamily: 'Courier New',
+    fontWeight: 'bold',
+    fontSize: 80});
+
+  this.startTool(ToolEnum.Pointer);
   },
 
   initToolbar: function() {
