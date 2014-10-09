@@ -24,11 +24,13 @@ define(function() {
       this.speed = speed || this.speed;
       this.clockwise = clockwise || this.clockwise;
       var d = numOfTeeth * gScale;
-      var outerCicle = new paper.Path.Circle(pt, d / 2);
-      outerCicle.fillColor = color;
+      var outerCircle = new paper.Path.Circle(pt, d / 2);
+      outerCircle.fillColor = color;
       var innerCircle = new paper.Path.Circle(pt, d / 8);
       innerCircle.fillColor = 'white';
       this.group.addChild(this.drawTeeth(d/2-5, d/gScale, color));
+      this.group.addChild(innerCircle);
+      this.group.addChild(outerCircle);
     },
 
     drawTeeth: function(d, plots, c) {

@@ -160,7 +160,7 @@ Painter.prototype = {
     });
     addToolbarItem('ruler', function() {
       console.log('TODO: ruler');
-      this.animation = !this.animation;
+      self.triggerGearAnimation();
     });
     addToolbarSeparator();
 
@@ -422,7 +422,14 @@ Painter.prototype = {
           self.ss.addPath(shape.path);
       });
     } else {
-      this.ss.addPath(path);
+      var getRootItem = function(item) {
+        debugger;
+        var parent = item;
+        while (parent.parent && !(parent.parent instanceof paper.Layer))
+          parent = parent.parent;
+        return parent;
+      };
+      this.ss.addPath(getRootItem(path));
     }
   },
 
@@ -486,7 +493,7 @@ Painter.prototype = {
     var r2 = g2 * scale / 2;
     var p2 = new paper.Point(pt.x + ((r1 + r2 + size - 2) * Math.cos((angle / 180)*Math.PI)),
         pt.y + ((r1 + r2 + size - 2) * Math.sin(angle/180 * Math.PI)));
-    var dupGear = gearLib.createGear(p2, g2, color, speed * gear.teethCount / g2);
+    var dupGear = gearLib.createGear(p2, g2, color, speed * gear.teethCount / g2, clockwise);
     this.gears.push(dupGear);
     // rotate
     var wedge = 360 / gear.teethCount;
@@ -515,14 +522,21 @@ Painter.prototype = {
     }
   },
 
-  gearAnimation: function() {
-    if (!this.animation)
-      return;
-    for (var i = 0, len = this.gears.length; i < len; i++) {
-      this.gears[i].spin();
-    }
+  triggerGearAnimation: function() {
+    var self = this;
+    var _animation = function() {
+      if (self.animation) {
+        requestAnimationFrame(_animation);
+        for (var i = 0, len = self.gears.length; i < len; i++) {
+          self.gears[i].spin();
+        }
+        paper.project.view.update();
+      }
+    };
+    self.animation = !self.animation;
+    if (self.animation)
+      _animation();
   }
-
 };
 
 return {
@@ -530,5 +544,6 @@ return {
     return new Painter(app);
   }
 };
+
 
 });
