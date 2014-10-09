@@ -1,6 +1,8 @@
 #ignore the local nodejs modules
 node_modules/
 bin/
+ddexamples/
+whiteboard2/
 
 # sublime project settings
 *.sublime-project
