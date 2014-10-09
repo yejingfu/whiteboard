@@ -457,11 +457,11 @@ Painter.prototype = {
     var config = [{'numTeeth': 15, 'color': '#ee2a33', 'angle':0},   // red
         {'numTeeth': 4, 'color': '#00aeef', 'angle': 102},       // blue  (100)
         {'numTeeth': 41, 'color': '#52b755', 'angle': 52},     //green
-        {'numTeeth': 6, 'color': '#d03c3a', 'angle': 338},      // dark red (324)
+        {'numTeeth': 6, 'color': '#d03c3a', 'angle': 320},      // dark red (324)
         {'numTeeth': 9, 'color': '#f00ff0', 'angle': 30},       // light purple
         {'numTeeth': 4, 'color': '#fec01e', 'angle': 298},      // yellow
         {'numTeeth': 21, 'color': '#e0cb61', 'angle': 248},     // beige
-        {'numTeeth': 11, 'color': '#f69c9f', 'angle': 210},     // pink
+        {'numTeeth': 11, 'color': '#f69c9f', 'angle': 214},     // pink (210)
         {'numTeeth': 8, 'color': '#157d6b', 'angle': 124}/*,   //dark green
         {'numTeeth': 11, 'color': '#52b755', 'angle':0}*/   // orange
     ];
