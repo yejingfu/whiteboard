@@ -423,7 +423,6 @@ Painter.prototype = {
       });
     } else {
       var getRootItem = function(item) {
-        debugger;
         var parent = item;
         while (parent.parent && !(parent.parent instanceof paper.Layer))
           parent = parent.parent;
