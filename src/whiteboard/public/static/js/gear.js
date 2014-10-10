@@ -29,8 +29,8 @@ define(function() {
       var innerCircle = new paper.Path.Circle(pt, d / 8);
       innerCircle.fillColor = 'white';
       this.group.addChild(this.drawTeeth(d/2-5, d/gScale, color));
-      this.group.addChild(innerCircle);
       this.group.addChild(outerCircle);
+      this.group.addChild(innerCircle);
     },
 
     drawTeeth: function(d, plots, c) {
