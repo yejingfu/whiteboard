@@ -195,6 +195,16 @@ Painter.prototype = {
     });
     onWinResize();
     toolbar.css('visibility', 'visible');
+
+    self.canvas.addEventListener('touchstart', function(e) {
+    }, false);
+
+    self.canvas.addEventListener('touchend', function(e) {
+    }, false);
+
+    self.canvas.addEventListener('touchmove', function(e) {
+    });
+
   },
   
   changeToolbarItemState: function(name, state, force) {
