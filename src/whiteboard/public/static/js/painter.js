@@ -35,6 +35,7 @@ var Painter = function(app) {
     tolerance: 3
   };
 
+  this.sampleGears = [];
   this.gears = [];
   this.animation = false;
 };
@@ -99,8 +100,13 @@ Painter.prototype = {
       };
       if (kind === ToolEnum.Pointer) {
         tool.onKeyDown = function(e) {
-          if (e.key === 'delete')
-            self.removeSelection();
+          if (e.key === 'delete') {
+            //debugger;
+            if (e.event.shiftKey)
+              self.removeAll();
+            else
+              self.removeSelection();
+          }
         };
         tool.onKeyUp = function(e) {
 
@@ -149,6 +155,7 @@ Painter.prototype = {
     addToolbarSeparator();
     addToolbarItem('zoomin', function() {
       console.log('TODO: zoomin');
+      self.drawBaseGear();
     });
     addToolbarItem('zoomout', function() {
       console.log('TODO: zoomout');
@@ -465,8 +472,33 @@ Painter.prototype = {
     this.doc.endChange();
   },
 
+  removeAll: function() {
+    this.deselectPath();
+    //1, paper.project.clear();
+    // 2, 
+    // this.doc.beginChange();
+    // this.doc.shapeRoot.removeAllShapeItems();
+    // this.doc.endChange();
+    // 3,
+    while (this.doc.shapeRoot.count() > 0) {
+      this.doc.beginChange();
+      this.doc.shapeRoot.removeFirstItem();
+      this.doc.endChange();
+    }
+  },
+
+  drawBaseGear: function() {
+    var self = this;
+    self.doc.beginChange();
+    var p = new paper.Point(this.canvas.width / 3, this.canvas.height / 3);
+    var gear = gearLib.createGear(p, 9, '#ff0ff0', 30, true);
+    self.gears.push(gear);
+    self.addPath(gear);
+    self.doc.endChange();
+  },
+
   drawGearSample: function() {
-    if (this.gears.length > 0)
+    if (this.sampleGears.length > 0)
       return;
     var width = this.canvas.width;
     var height = this.canvas.height;
@@ -486,7 +518,7 @@ Painter.prototype = {
     var clockwise = true;
     var speed = 0.75;
     var gear = gearLib.createGear(p, config[0].numTeeth, config[0].color, speed, clockwise);   // red
-    this.gears.push(gear);
+    this.sampleGears.push(gear);
     clockwise = !clockwise;
     var ret = {'point': p, 'gear': gear, 'speed': speed};
     for (var i = 1, len = config.length; i < len; i++) {
@@ -503,7 +535,7 @@ Painter.prototype = {
     var p2 = new paper.Point(pt.x + ((r1 + r2 + size - 2) * Math.cos((angle / 180)*Math.PI)),
         pt.y + ((r1 + r2 + size - 2) * Math.sin(angle/180 * Math.PI)));
     var dupGear = gearLib.createGear(p2, g2, color, speed * gear.teethCount / g2, clockwise);
-    this.gears.push(dupGear);
+    this.sampleGears.push(dupGear);
     // rotate
     var wedge = 360 / gear.teethCount;
     var tooth = Math.floor((angle - gear.rotation) / wedge);
@@ -536,8 +568,8 @@ Painter.prototype = {
     var _animation = function() {
       if (self.animation) {
         requestAnimationFrame(_animation);
-        for (var i = 0, len = self.gears.length; i < len; i++) {
-          self.gears[i].spin();
+        for (var i = 0, len = self.sampleGears.length; i < len; i++) {
+          self.sampleGears[i].spin();
         }
         paper.project.view.update();
       }

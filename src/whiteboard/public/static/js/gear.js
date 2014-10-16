@@ -87,6 +87,10 @@ define(function() {
       return g;
     },
 
+    isGearType: function(obj) {
+      return (obj instanceof Gear);
+    },
+
     defaultScale: gScale,
     defaultToothSize: gToothSize
   };

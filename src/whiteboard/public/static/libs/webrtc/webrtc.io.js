@@ -372,7 +372,7 @@ if (navigator.webkitGetUserMedia) {
           rtc.fire('ready');
         }
       }, function(error) {
-        alert("Could not connect stream.");
+        //alert("Could not connect stream.");   // comment out by Jingfu
         onFail(error);
       });
     } else {

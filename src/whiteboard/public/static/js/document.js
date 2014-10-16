@@ -1,15 +1,23 @@
-define(['selectionset', 'util'], function(sslib, util) {
+define(['selectionset', 'util', 'gear'], function(sslib, util, gearLib) {
 
 var ShapeItem = function(path, key) {
   this.path = path;
   this.key = key || util.uniqueID();
+  if (gearLib.isGearType(path))
+    this.key = 'gear-' + this.key;
 };
 
 ShapeItem.prototype = {
   toJsonObject: function() {
+    var jsonStr = '';
+    if (this.key.indexOf('gear-') >= 0)
+      jsonStr = this.path.group.exportJSON({asString: true, precision: 5});
+    else
+      jsonStr = this.path.exportJSON({asString:true, precision:5});
+
     return {
       'key': this.key,
-      'path': this.path.exportJSON({asString:true, precision:5})
+      'path': jsonStr
     };
   },
   
@@ -41,6 +49,10 @@ var ShapeRoot = function(doc) {
 };
 
 ShapeRoot.prototype = {
+  count: function() {
+    return Object.keys(this.shapes).length;
+  },
+
   addPath: function(path) {
     if (!this.existPath(path)) {
       var shape = this.addShapeItem(new ShapeItem(path));
@@ -135,6 +147,21 @@ ShapeRoot.prototype = {
       this.shapes[id].path.remove();
       delete this.shapes[id];
     }
+  },
+
+  removeAllShapeItems: function() {
+    for (id in this.shapes) {
+      this.removedShapes.push(this.shapes[id]);
+      this.shapes[id].path.remove();
+      delete this.shapes[id];
+    }
+  },
+
+  removeFirstItem: function() {
+    var ks = Object.keys(this.shapes);
+    if (ks.length === 0)
+      return;
+    this.removeShapeItem(ks[0]);
   },
   
   findInArray: function(item, items) {
@@ -303,7 +330,8 @@ Document.prototype = {
     self.shapeRoot.removedShapes.forEach(function(shape) {
       idx = self.findInSnapshot(shape, snapshot);
       if (idx >= 0) {
-        delta = {p:['shapes', idx], ld: shape.toJsonObject()};
+        //delta = {p:['shapes', idx], ld: shape.toJsonObject()};
+        delta = {p:['shapes', idx], ld: null};
         //delta = {p:['shapes', shape.key], ld: shape.toJsonObject()};
         self.sharedDocument.submitOp([delta]);
       }
