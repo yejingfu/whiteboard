@@ -1,4 +1,4 @@
-define(function() {
+define(['util'], function(utilLib) {
 
   var gSpeed = 0.75;
   var gScale = 15;
@@ -11,7 +11,9 @@ define(function() {
 
   var Gear = function() {
     this.group = new paper.Group();
+    this.teetch = 0;
     this.speed = gSpeed;
+    this.color = '#ff0000';
     this.clockwise = gClockwise;
     this.pos = null;
     this.teethCount = 0;
@@ -21,6 +23,8 @@ define(function() {
   Gear.prototype = {
     init: function(pt, numOfTeeth, color, speed, clockwise) {
       this.pos = pt.clone();
+      this.teetch = numOfTeeth;
+      this.color = color;
       this.speed = speed || this.speed;
       this.clockwise = clockwise || this.clockwise;
       var d = numOfTeeth * gScale;
@@ -31,8 +35,31 @@ define(function() {
       this.group.addChild(this.drawTeeth(d/2-5, d/gScale, color));
       this.group.addChild(outerCircle);
       this.group.addChild(innerCircle);
+      this.group.name = 'gear-' + utilLib.uniqueID();
+    },
+    
+    exportJSON: function() {
+      var self = this;
+      var obj = {
+        'point': [self.pos.x, self.pos.y],
+        'teeth': self.teetch,
+        'color': self.color,
+        'speed': self.speed,
+        'clockwise': self.clockwise
+      };
+      return JSON.stringify(obj);
+    },
+    
+    importJSON: function(str) {
+      var obj = JSON.parse(str);
+      this.init(new paper.Point(obj.point[0], obj.point[1]), obj.teeth, obj.color, obj.speed, obj.clockwise);
     },
 
+    moveDelta: function(delta) {
+      this.pos = this.pos.add(delta);
+      this.group.position = this.group.position.add(delta);
+    },
+    
     drawTeeth: function(d, plots, c) {
       var createToothSymbol = function(color) {
         var path = new paper.Path();
@@ -85,6 +112,10 @@ define(function() {
       var g = new Gear();
       g.init(pt, NumOfTeeth, color, speed, clockwise);
       return g;
+    },
+    
+    createEmptyGear: function() {
+      return new Gear();
     },
 
     isGearType: function(obj) {

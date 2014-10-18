@@ -8,5 +8,5 @@ exports.index = function(req, res, ctx){
 exports.signin = function(req, res, ctx) {
   //console.log('signin:' + JSON.stringify(req.body));
   var userId = req.body.email;
-  res.redirect('/?user='+userId);
+  res.redirect('/?user='+userId+'&channel=test01');
 }

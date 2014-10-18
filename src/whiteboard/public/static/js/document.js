@@ -10,10 +10,12 @@ var ShapeItem = function(path, key) {
 ShapeItem.prototype = {
   toJsonObject: function() {
     var jsonStr = '';
-    if (this.key.indexOf('gear-') >= 0)
-      jsonStr = this.path.group.exportJSON({asString: true, precision: 5});
-    else
+    if (this.key.indexOf('gear-') >= 0) {
+      //jsonStr = this.path.group.exportJSON({asString: true, precision: 5});
+      jsonStr = this.path.exportJSON();
+    } else {
       jsonStr = this.path.exportJSON({asString:true, precision:5});
+    }
 
     return {
       'key': this.key,
@@ -23,8 +25,13 @@ ShapeItem.prototype = {
   
   fromJsonObject: function(obj) {
     this.key = obj.key;
-    this.path = new paper.Path();
-    this.path.importJSON(obj.path);
+    if (this.key.indexOf('gear-') >= 0) {
+      this.path = gearLib.createEmptyGear();
+      this.path.importJSON(obj.path);
+    } else {
+      this.path = new paper.Path();
+      this.path.importJSON(obj.path);
+    }
   },
 
   serializePath: function() {
@@ -42,6 +49,7 @@ ShapeItem.prototype = {
 var ShapeRoot = function(doc) {
   this.doc = doc;
   this.shapes = {};
+  this.gears = [];
 
   this.addedShapes = [];
   this.removedShapes = [];
@@ -94,8 +102,24 @@ ShapeRoot.prototype = {
         return true;
       }
     });
-    if (item)
+
+    if (item) {
       this.updateShapeItemProp(item, propName, propValue, isPulling);
+    } else if (path.name && path.name.indexOf('gear-') === 0) {
+      var gear = this.findGearByChildGroup(path);
+      if (gear && propName === 'position') {
+        item = this.findShapeItemByGear(gear);
+        if (this.doc.isChanging && !isPulling) {
+          var propValueStr = JSON.stringify(propValue);
+          this.updatedShapes.push({'key': item.key, 'name':propName, 'value':propValueStr});
+        } else if (isPulling) {
+          var obj = JSON.parse(propValue);
+          var pt = new paper.Point(obj[1], obj[2]);
+          gear.pos = pt;
+          gear.group.position = pt;
+        }
+      }
+    }
   },
   
   updatePropByShapeId: function(shapeId, propName, propValue, isPulling) {
@@ -106,18 +130,29 @@ ShapeRoot.prototype = {
         return true;
       }
     });
-    if (item)
+    if (item) {
       this.updateShapeItemProp(item, propName, propValue, isPulling);
+    }
   },
 
   updateShapeItemProp: function(shape, propName, propValue, isPulling) {
+    // tmp
+    if (shape.key.indexOf('gear-') === 0 && propName === 'position' && isPulling) {
+      var gear = shape.path;
+      var obj = JSON.parse(propValue);
+      var pt = new paper.Point(obj[1], obj[2]);
+      gear.pos = pt;
+      gear.group.position = pt;
+      return;
+    }
+  
     var id = shape.key;
     var propValueStr;
     if (typeof propValue === 'string')
       propValueStr = propValue;
     else
       propValueStr = JSON.stringify(propValue);
-      if (id in this.shapes) {
+    if (id in this.shapes) {
       if (propName === 'position') {
         if (propValue instanceof paper.Point) {
           shape.path[propName] = propValue;
@@ -211,6 +246,24 @@ ShapeRoot.prototype = {
     }
   },
   
+  findGearByChildGroup: function(group) {
+    for (var i = 0, len = this.gears.length; i < len; i++) {
+      if (this.gears[i].group === group)
+        return this.gears[i];
+    }
+  },
+  
+  findShapeItemByGear: function(gear) {
+    var shape = undefined;
+    this.traverseShapes(false, function(curShape) {
+      if (curShape.path === gear) {
+        shape = curShape;
+        return true;
+      }
+    });
+    return shape;
+  },
+  
   toJsonObject: function() {
     var shapes = [];
     this.traverseShapes(false, function(shape) {
@@ -226,6 +279,8 @@ ShapeRoot.prototype = {
       var shape = new ShapeItem();
       shape.fromJsonObject(shapes[i]);
       this.addShapeItem(shape);
+      if (shape.key.indexOf('gear-') === 0)
+        this.gears.push(shape.path);
     }
   }
 };
@@ -330,8 +385,8 @@ Document.prototype = {
     self.shapeRoot.removedShapes.forEach(function(shape) {
       idx = self.findInSnapshot(shape, snapshot);
       if (idx >= 0) {
-        //delta = {p:['shapes', idx], ld: shape.toJsonObject()};
-        delta = {p:['shapes', idx], ld: null};
+        delta = {p:['shapes', idx], ld: shape.toJsonObject()};
+        //delta = {p:['shapes', idx], ld: null};
         //delta = {p:['shapes', shape.key], ld: shape.toJsonObject()};
         self.sharedDocument.submitOp([delta]);
       }

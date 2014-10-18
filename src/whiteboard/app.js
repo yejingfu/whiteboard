@@ -32,7 +32,7 @@ if ('development' === app.get('env')) {
 }
 
 var ctx = {
-    title: 'Concurrent Node',
+    title: 'Concurrent Note',
 	env: app.get('env')
 };
 

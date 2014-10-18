@@ -36,7 +36,6 @@ var Painter = function(app) {
   };
 
   this.sampleGears = [];
-  this.gears = [];
   this.animation = false;
 };
 
@@ -153,12 +152,18 @@ Painter.prototype = {
       console.log('TODO: redo');
     });
     addToolbarSeparator();
-    addToolbarItem('zoomin', function() {
+    addToolbarItem('more', function() {
       console.log('TODO: zoomin');
       self.drawBaseGear();
     });
-    addToolbarItem('zoomout', function() {
+    addToolbarItem('setting', function() {
+      console.log('TODO: setting');
+      var ret = $('#gear-setting').modal();
+      console.log('gear-setting: ' + ret);
+    });
+    addToolbarItem('play', function() {
       console.log('TODO: zoomout');
+      self.playGearAnimation();
     });
     addToolbarSeparator();
     addToolbarItem('grid', function() {
@@ -188,6 +193,7 @@ Painter.prototype = {
         paper.project.currentStyle.strokeColor = '#'+hex;
       }
     });
+    
 
     self.enableToolbarItem('undo', false);
     self.enableToolbarItem('redo', false);
@@ -304,7 +310,15 @@ Painter.prototype = {
     case ToolEnum.Pointer: {
       for (var i in self.ss.items) {
         var path = self.ss.items[i].path;
-        path.position = path.position.add(event.delta);
+        if (path.name && path.name.indexOf('gear-') === 0) {
+          // move gear
+          var gear = self.doc.shapeRoot.findGearByChildGroup(path);
+          if (gear) {
+            gear.moveDelta(event.delta);
+          }
+        } else {
+          path.position = path.position.add(event.delta);
+        }
       }
       break;
     }
@@ -492,7 +506,7 @@ Painter.prototype = {
     self.doc.beginChange();
     var p = new paper.Point(this.canvas.width / 3, this.canvas.height / 3);
     var gear = gearLib.createGear(p, 9, '#ff0ff0', 30, true);
-    self.gears.push(gear);
+    self.doc.shapeRoot.gears.push(gear);
     self.addPath(gear);
     self.doc.endChange();
   },
@@ -577,7 +591,23 @@ Painter.prototype = {
     self.animation = !self.animation;
     if (self.animation)
       _animation();
-  }
+  },
+  
+  playGearAnimation: function() {
+    var self = this;
+    var _animation = function() {
+      if (self.animation) {
+        requestAnimationFrame(_animation);
+        for (var i = 0, len = self.doc.shapeRoot.gears.length; i < len; i++) {
+          self.doc.shapeRoot.gears[i].spin();
+        }
+        paper.project.view.update();
+      }
+    };
+    self.animation = !self.animation;
+    if (self.animation)
+      _animation();
+  },
 };
 
 return {
