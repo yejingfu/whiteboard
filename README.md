@@ -3,6 +3,8 @@ White Board
 
 This is a collaborative tool built by HTML5 technology.
 
+## The full source codes are moved to bitbucket: https://bitbucket.org/yejingfu/whiteboard
+
 ## Overview
 
 This application is aiming to provide a collaborative white board so that the co-workers can communicate in different ways.
