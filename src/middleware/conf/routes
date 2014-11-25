@@ -1,0 +1,31 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.Application.index
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+
+#GET     /help                       controllers.Application.help
+#GET     /test                       controllers.Application.test
+
+# basic user operations
+POST    /v1.0/user/register          @controllers.UserController.register
+#POST    /v1.0/user/login/credential @controllers.UserController.login
+#POST    /v1.0/user/logout           @controllers.UserController.logout
+#PUT     /v1.0/user                  @controllers.UserController.updateUser
+GET     /v1.0/user/:uid              @controllers.UserController.getUser(uid: String)
+#GET     /v1.0/userprofile/:uid      @controllers.UserController.getUserProfile(uid: String)
+#GET     /v1.0/users                 @controllers.UserController.getUsers(startid:String ?="", maxresults:Int ?=100)
+#DELETE  /v1.0/user/:uid             @controllers.UserController.deleteUser(uid: String)
+
+# basic session operations
+#GET     /v1.0/session/:sid          @controllers.UserController.getSession(sid: String)
+#PUT     /v1.0/session/:sid          @controllers.UserController.touchSession(sid: String)
+
+# Swagger - Root Resources Listing
+#GET     /api-docs.json              @controllers.ApiHelpController.getResources
+#GET     /api-docs.json/v1.0/user    @controllers.ApiHelpController.getResource(path = "/v1.0/user")
+

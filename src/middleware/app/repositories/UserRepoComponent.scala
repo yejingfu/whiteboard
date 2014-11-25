@@ -1,0 +1,5 @@
+package repositories
+
+trait UserRepoComponent {
+
+}
